@@ -4,3 +4,9 @@
 .httr-oauth
 .DS_Store
 .quarto
+.Renviron
+config.R
+*.Rcheck/
+*.tar.gz
+Thumbs.db
+*.swp
