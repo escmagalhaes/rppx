@@ -1,0 +1,85 @@
+Package: rppx
+Title: Data Analysis Toolkit for Pre-Normalized Reverse Phase Protein
+    Array Data
+Version: 0.0.0.9000
+Authors@R: 
+    person("Eduardo Sabino", "de Camargo Magalhães", , "escmagalhaes@gmail.com", role = c("aut", "cre"),
+           comment = c(ORCID = "0000-0002-7726-4827"))
+Description: Designed to work with pre-normalized data derived from
+    Reverse Phase Protein Arrays (RPPA), downstream of RPPASPACE. Provides
+    a compendium of functions related to analytical pipelines with
+    graphical visualization and figure generation: quality control,
+    hierarchical clustering, protein-protein correlation, differential
+    protein expression, pathway enrichment (via EnrichR or customized),
+    protein networks (via Cytoscape), univariate and multivariate Cox
+    Proportional Hazards models, descriptive tables, plotting functions
+    (mainly via ggplot2 and ComplexHeatmap) and data exporting functions.
+License: MIT + file LICENSE
+URL: https://github.com/escmagalhaes/rppx
+BugReports: https://github.com/escmagalhaes/rppx/issues
+Imports: 
+    broom,
+    caret,
+    cBioPortalData,
+    circlize,
+    ComplexHeatmap,
+    digest,
+    doParallel,
+    doRNG,
+    dplyr,
+    EnhancedVolcano,
+    enrichR,
+    forcats,
+    foreach,
+    ggplot2,
+    ggplotify,
+    ggpubr,
+    glmnet,
+    graphics,
+    grDevices,
+    grid,
+    gt,
+    gtsummary,
+    HGNChelper,
+    httr2,
+    igraph,
+    labelled,
+    limma,
+    matlab,
+    methods,
+    MultiAssayExperiment,
+    openxlsx2,
+    parallel,
+    pheatmap,
+    plyr,
+    purrr,
+    qs2,
+    quarto,
+    RColorBrewer,
+    rcrossref,
+    RCy3,
+    rentrez,
+    rsample,
+    rstatix,
+    scales,
+    stats,
+    STRINGdb,
+    stringr,
+    survival,
+    tibble,
+    tidyr,
+    tools,
+    utils
+Remotes:
+    github::ddsjoberg/gtforester,
+    progenyClust=url::https://cran.r-project.org/src/contrib/Archive/progenyClust/progenyClust_1.2.tar.gz,
+    bioc::3.22/limma,
+    bioc::3.22/ComplexHeatmap,
+    bioc::3.22/MultiAssayExperiment,
+    bioc::3.22/cBioPortalData,
+    bioc::3.22/RCy3,
+    bioc::3.22/EnhancedVolcano,
+    bioc::3.22/STRINGdb
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 8.0.0
