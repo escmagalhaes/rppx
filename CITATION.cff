@@ -1,0 +1,14 @@
+cff-version: 1.2.0
+message: "To cite this software, please use the information below"
+type: software
+title: "rppx"
+version: 0.1.0-beta
+date-released: 2026-08-26
+url: "https://github.com/escmagalhaes/rppx"
+doi: 10.5281/zenodo.22119850
+authors:
+  - family-names: "Eduardo Sabino"
+    given-names: "de Camargo Magalhães"
+    email: "escmagalhaes@gmail.com"
+    orcid: "0000-0002-7726-4827"
+license: MIT
