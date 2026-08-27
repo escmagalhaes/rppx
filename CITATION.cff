@@ -7,8 +7,8 @@ date-released: 2026-08-26
 url: "https://github.com/escmagalhaes/rppx"
 doi: 10.5281/zenodo.22119850
 authors:
-  - family-names: "Eduardo Sabino"
-    given-names: "de Camargo Magalhães"
+  - family-names: "de Camargo Magalhães"
+    given-names: "Eduardo Sabino"
     email: "escmagalhaes@gmail.com"
     orcid: "0000-0002-7726-4827"
 license: MIT
