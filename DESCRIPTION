@@ -1,7 +1,7 @@
 Package: rppx
 Title: Data Analysis Toolkit for Pre-Normalized Reverse Phase Protein
     Array Data
-Version: v0.1.2-beta
+Version: 0.1.2
 Authors@R: 
     person("Eduardo Sabino", "de Camargo Magalhães", , "escmagalhaes@gmail.com", role = c("aut", "cre"),
            comment = c(ORCID = "0000-0002-7726-4827"))
