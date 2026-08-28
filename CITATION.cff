@@ -2,7 +2,7 @@ cff-version: 1.2.0
 message: "To cite this software, please use the information below"
 type: software
 title: "rppx"
-version: 0.1.0-beta
+version: 0.1.2-beta
 date-released: 2026-08-26
 url: "https://github.com/escmagalhaes/rppx"
 doi: 10.5281/zenodo.22119850

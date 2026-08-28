@@ -1,7 +1,7 @@
 Package: rppx
 Title: Data Analysis Toolkit for Pre-Normalized Reverse Phase Protein
     Array Data
-Version: 0.0.0.9000
+Version: v0.1.2-beta
 Authors@R: 
     person("Eduardo Sabino", "de Camargo Magalhães", , "escmagalhaes@gmail.com", role = c("aut", "cre"),
            comment = c(ORCID = "0000-0002-7726-4827"))
@@ -14,7 +14,7 @@ Description: Designed to work with pre-normalized data derived from
     protein networks (via Cytoscape), univariate and multivariate Cox
     Proportional Hazards models, descriptive tables, plotting functions
     (mainly via ggplot2 and ComplexHeatmap) and data exporting functions.
-License: MIT + file LICENSE
+License: MIT
 URL: https://github.com/escmagalhaes/rppx
 BugReports: https://github.com/escmagalhaes/rppx/issues
 Imports: 

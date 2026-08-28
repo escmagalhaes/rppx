@@ -14,7 +14,7 @@ You can install the beta version of rppx from [GitHub](https://github.com/) with
 
 ``` r
 if (!requireNamespace("remotes", quietly = TRUE)) install.packages("remotes")
-remotes::install_github("escmagalhaes/rppx@v0.1.0-beta")
+remotes::install_github("escmagalhaes/rppx@v0.1.2-beta")
 ```
 A few dependencies belong to Bioconductor and will be automatically installed  
 
