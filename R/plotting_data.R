@@ -664,6 +664,7 @@ get_upset_ptns<-function(comb_mat) {
 #' @examples
 #' ## Placeholder Example ##
 #Function to make heatmaps
+#Function to make heatmaps
 plot_heatmap<-function(df,proteins,
                        col_anno=TRUE,grouping_var=NULL,covars=NULL,covar_labels=NULL,
                        grouping_var_label=NULL,row_anno=FALSE,row_anno_df=NULL,
@@ -679,6 +680,10 @@ plot_heatmap<-function(df,proteins,
   #Input validation
   if (!all(sapply(df[,proteins,drop=FALSE], is.numeric))) {
     stop("Non-numeric protein columns detected")
+  }
+  if (!is.null(grouping_var)) {
+    if (!is.factor(df[[grouping_var]]))
+      stop(sprintf("grouping_var '%s' must be a factor with all levels defined.",grouping_var))
   }
 
   if (isTRUE(col_anno)) {
@@ -709,9 +714,9 @@ plot_heatmap<-function(df,proteins,
   #Resolve sample identifiers
   if (!is.null(col_id)) {
     if (!col_id %in% names(df))
-      stop(sprintf("col_id '%s' not found in df.", col_id))
+      stop(sprintf("col_id '%s' not found in input df.", col_id))
     if (anyDuplicated(df[[col_id]]))
-      stop(sprintf("col_id '%s' contains duplicates. Sample identifiers have to be unique.", col_id))
+      stop(sprintf("col_id '%s' contains duplicate values; sample identifiers must be unique.", col_id))
     rownames(df)<-as.character(df[[col_id]])
   }
 
@@ -725,7 +730,11 @@ plot_heatmap<-function(df,proteins,
 
   #Factor and order grouping_var
   if (!is.null(grouping_var)) {
-    df[[grouping_var]]<-factor(df[[grouping_var]])
+    if (is.factor(df[[grouping_var]])) {
+      df[[grouping_var]]<-factor(df[[grouping_var]],levels=levels(df[[grouping_var]]))
+    } else {
+      df[[grouping_var]]<-factor(df[[grouping_var]])
+    }
     df<-df[order(df[[grouping_var]]),]
   }
 

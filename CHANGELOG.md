@@ -7,6 +7,8 @@ All changes to rppx will be documented below
 ### Added
 - plot_heatmap(): new optional col_id argument to specify the column with sample identifiers. Used when heatmap colnames need to show sample identifiers.
 
+- plot_heatmap(): safety check to guarantee that grouping_var is a factor with pre-defined levels
+
 - run_QC_analysis(): new logical strict argument (default=TRUE). This is used when calling clean_protein_names() in this QC wrapper. Previously, strict=TRUE was hardcoded, making run_DE_analysis() to fail.
 
 - run_DE_analysis(): new logical strict argument (default=TRUE) added to this wrapper. his is used when calling clean_protein_names() in this QC wrapper. Previously, strict=TRUE was hardcoded, making run_DE_analysis() to fail.
@@ -19,6 +21,8 @@ All changes to rppx will be documented below
 ### Fixed
 
 - plot_heatmap(): column names in col_ann and ht_mtx were overwritten with seq_len(). This caused heatmaps to display numeric indexes instead of sample identifiers.
+
+- plot_heatmap(): adjusted grouping_var wrangling to not drop unused levels if one is empty
 
 - run_DE_analysis(): new strict = strict argument added to qc_results<-run_QC_analysis(). Now  strict argument can be controlled inside run_QC_analysis() from the run_DE_analysis() wrapper.  
 
