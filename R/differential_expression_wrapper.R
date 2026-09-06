@@ -31,7 +31,8 @@ run_DE_analysis<-function(df,proteins,grouping_variable=NULL,verbose=TRUE,
     check_mad              = check_mad,
     cor_cutoff             = cor_cutoff,
     ptn_z_thrs             = ptn_z_thrs,
-    freq_thrs              = freq_thrs
+    freq_thrs              = freq_thrs,
+    strict                 = strict
   )
 
   #Run DE model

@@ -7,7 +7,7 @@ run_QC_analysis<-function(df,proteins,verbose=TRUE,grouping_variable=NULL
                           ,sample_rm_thr=30,sample_diff_thr=20
                           ,run_feature_qc=TRUE,feature_outlier_policy="keep_all"
                           ,check_cor=TRUE,check_mad=FALSE,cor_cutoff=0.95
-                          ,ptn_z_thrs=3,freq_thrs=0.10){
+                          ,ptn_z_thrs=3,freq_thrs=0.10,strict=TRUE){
 
   #Match arguments
   sample_outlier_policy<-match.arg(sample_outlier_policy,
@@ -93,7 +93,7 @@ run_QC_analysis<-function(df,proteins,verbose=TRUE,grouping_variable=NULL
   )
 
   #Create a table with HGCN compatible protein names for downstream analysis
-  clean_names<-clean_protein_names(protein_names=ptn_final,strict=TRUE)
+  clean_names<-clean_protein_names(protein_names=ptn_final,strict=strict)
   name_map_tab<-clean_names$name_mapping[
     ,c('original',"base_name","ptm",'ptm_type','mapping_level','final_names')]
 

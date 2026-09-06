@@ -663,19 +663,24 @@ get_upset_ptns<-function(comb_mat) {
 #' @export
 #' @examples
 #' ## Placeholder Example ##
+#Function to make heatmaps
 plot_heatmap<-function(df,proteins,
                        col_anno=TRUE,grouping_var=NULL,covars=NULL,covar_labels=NULL,
                        grouping_var_label=NULL,row_anno=FALSE,row_anno_df=NULL,
                        row_anno_protein_col=NULL,rown_anno_vars=NULL,rown_anno_vars_labels=NULL,
-                       colors_ht=NULL,covar_colors_override=NULL,
+                       colors_ht=NULL,covar_colors_override=NULL,col_id=NULL,angle_col=45,
                        colors_anno_col=c(pal_jco()(2)[2:1],'red2',brewer.pal(7,"Dark2")[c(7,1,2:6)]),
                        colors_anno_row=c(pal_jco()(2)[2:1],'red2',brewer.pal(7,"Dark2")[c(7,1,2:6)]),
-                       colors_grouping_var=brewer.pal(7,"Dark2"),colors_NA=pal_jco()(3)[3],
+                       colors_grouping_var=NULL,colors_NA=pal_jco()(3)[3],
                        plot_title=NULL,cluster_rows=TRUE,cluster_cols=FALSE,
                        legend_breaks=NULL,legend_labels=NULL,breaks=NULL,protein_labels=NULL,
                        show_colnames=FALSE,show_rownames=TRUE,annotation_names_row=FALSE){
 
   #Input validation
+  if (!all(sapply(df[,proteins,drop=FALSE], is.numeric))) {
+    stop("Non-numeric protein columns detected")
+  }
+
   if (isTRUE(col_anno)) {
     if (is.null(grouping_var) && is.null(covars))
       stop("col_anno=TRUE but both grouping_var and covars are NULL.")
@@ -700,8 +705,23 @@ plot_heatmap<-function(df,proteins,
 
   #Dataframe subsetting
   df<-as.data.frame(df)
+
+  #Resolve sample identifiers
+  if (!is.null(col_id)) {
+    if (!col_id %in% names(df))
+      stop(sprintf("col_id '%s' not found in df.", col_id))
+    if (anyDuplicated(df[[col_id]]))
+      stop(sprintf("col_id '%s' contains duplicates. Sample identifiers have to be unique.", col_id))
+    rownames(df)<-as.character(df[[col_id]])
+  }
+
   subset_cols<-c(proteins,grouping_var,covars)
   df<-df[,subset_cols,drop=FALSE]
+
+  #Resolve grouping_var_colors
+  if (is.null(colors_grouping_var)) {
+    colors_grouping_var<-get_mycolors(mode="vector")
+  }
 
   #Factor and order grouping_var
   if (!is.null(grouping_var)) {
@@ -755,7 +775,7 @@ plot_heatmap<-function(df,proteins,
       if (!is.null(covars)) if (!is.null(covar_labels)) covar_labels else covars
     )
     colnames(col_ann)<-col_labels
-    row.names(col_ann)<-seq_len(nrow(df))
+    row.names(col_ann)<-rownames(df)
 
     col_ann_colors<-list()
     for ( i in seq_along(col_ann)) {
@@ -815,10 +835,9 @@ plot_heatmap<-function(df,proteins,
   if (length(ann_colors)==0) ann_colors<-NULL
 
   #Clean heatmap matrix
-  ht_mtx<-df[,sort(proteins)]
-  ht_mtx<-as.data.frame(t(ht_mtx))
-  ht_mtx<-as.matrix(sapply(ht_mtx,function(x) as.numeric(as.character(x))))
-  colnames(ht_mtx)<-seq_len(ncol(ht_mtx))
+  ht_mtx<-as.data.frame(df[,sort(proteins),drop=FALSE])
+  ht_mtx<-t(as.matrix(ht_mtx))
+  colnames(ht_mtx)<-rownames(df)
   rownames(ht_mtx)<-sort(proteins)
 
   #Make sure row_anno is aligned with matrix
@@ -853,26 +872,32 @@ plot_heatmap<-function(df,proteins,
     colors_ht<-matlab::jet.colors(length(breaks)-1)
   }
 
-  ht<-ggplotify::as.ggplot(pheatmap::pheatmap(ht_mtx
-                                              ,annotation_colors=ann_colors
-                                              ,main=plot_title
-                                              ,annotation_col=col_ann
-                                              ,annotation_row=row_ann
-                                              ,cluster_rows=cluster_rows
-                                              ,cluster_cols=cluster_cols
-                                              ,clustering_method='ward.D2'
-                                              ,fontsize=8,border_color=NA
-                                              ,col=colors_ht
-                                              ,breaks=breaks
-                                              ,legend_breaks=legend_breaks
-                                              ,legend_labels=legend_labels
-                                              ,treeheight_row=0
-                                              ,scale="none"
-                                              ,show_colnames=show_colnames
-                                              ,show_rownames=show_rownames
-                                              ,annotation_names_row=annotation_names_row
-                                              ,fontsize_row=8
-                                              ,plot=FALSE))
+  ht<-ggplotify::as.ggplot(pheatmap::pheatmap(
+    ht_mtx,
+    annotation_colors=ann_colors,
+    main=plot_title,
+    annotation_col=col_ann,
+    angle_col=angle_col,
+    annotation_row=row_ann,
+    cluster_rows=cluster_rows,
+    cluster_cols=cluster_cols,
+    clustering_method='ward.D2',
+    fontsize=8,
+    border_color=NA,
+    col=colors_ht,
+    breaks=breaks,
+    legend_breaks=legend_breaks,
+    legend_labels=legend_labels,
+    treeheight_row=0,
+    scale="none",
+    show_colnames=show_colnames,
+    show_rownames=show_rownames,
+    annotation_names_row=annotation_names_row,
+    fontsize_row=8,
+    silent=TRUE
+  )
+  )
+
   return(ht)
 }
 
