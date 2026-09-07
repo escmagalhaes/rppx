@@ -665,6 +665,7 @@ get_upset_ptns<-function(comb_mat) {
 #' ## Placeholder Example ##
 #Function to make heatmaps
 #Function to make heatmaps
+#Function to make heatmaps
 plot_heatmap<-function(df,proteins,
                        col_anno=TRUE,grouping_var=NULL,covars=NULL,covar_labels=NULL,
                        grouping_var_label=NULL,row_anno=FALSE,row_anno_df=NULL,
@@ -674,8 +675,9 @@ plot_heatmap<-function(df,proteins,
                        colors_anno_row=c(pal_jco()(2)[2:1],'red2',brewer.pal(7,"Dark2")[c(7,1,2:6)]),
                        colors_grouping_var=NULL,colors_NA=pal_jco()(3)[3],
                        plot_title=NULL,cluster_rows=TRUE,cluster_cols=FALSE,
-                       legend_breaks=NULL,legend_labels=NULL,breaks=NULL,protein_labels=NULL,
-                       show_colnames=FALSE,show_rownames=TRUE,annotation_names_row=FALSE){
+                       legend_breaks=NULL,legend_labels=NULL,breaks=NULL,
+                       protein_labels=NULL,show_colnames=FALSE,show_rownames=TRUE,
+                       annotation_names_row=FALSE,row_anno_colors_override=NULL){
 
   #Input validation
   if (!all(sapply(df[,proteins,drop=FALSE], is.numeric))) {
@@ -764,7 +766,14 @@ plot_heatmap<-function(df,proteins,
       lvls <- unique(x[x != "N/A"])
       if (any(x=="N/A")) lvls<-c(lvls,"N/A")
     }
-    x<-factor(x,levels= lvls)
+
+    x<-factor(x,levels = lvls)
+
+    #Automatically extend color palette if necessary
+    if (length(lvls) > length(colors_vec)) {
+      colors_vec<-grDevices::colorRampPalette(colors_vec)(length(lvls))
+    }
+
     color_vec<-colors_vec[seq_along(lvls)]
 
     if ("N/A" %in% lvls) color_vec[lvls=="N/A"]<-colors_NA
@@ -831,6 +840,17 @@ plot_heatmap<-function(df,proteins,
     row_ann_colors<-list()
     for ( i in seq_along(row_ann)) {
       adj_row_ann_colors<-fix_annotation(row_ann[[ i ]],colors_anno_row,colors_NA)
+
+      #Override colors if provided
+      var_name<-colnames(row_ann)[ i ]
+      if (!is.null(row_anno_colors_override) && var_name %in% names(row_anno_colors_override)) {
+        adj_row_ann_colors$colors<-row_anno_colors_override[[var_name]]
+
+        if ("N/A" %in% levels(adj_row_ann_colors$factor) && !"N/A" %in% names(adj_row_ann_colors$colors)) {
+          adj_row_ann_colors$colors["N/A"]<-colors_NA
+        }
+      }
+
       row_ann[[ i ]]<-adj_row_ann_colors$factor
       row_ann_colors[[colnames(row_ann)[ i ]]]<-adj_row_ann_colors$colors
     }
@@ -844,10 +864,10 @@ plot_heatmap<-function(df,proteins,
   if (length(ann_colors)==0) ann_colors<-NULL
 
   #Clean heatmap matrix
-  ht_mtx<-as.data.frame(df[,sort(proteins),drop=FALSE])
+  ht_mtx<-as.data.frame(df[,proteins,drop=FALSE])
   ht_mtx<-t(as.matrix(ht_mtx))
   colnames(ht_mtx)<-rownames(df)
-  rownames(ht_mtx)<-sort(proteins)
+  rownames(ht_mtx)<-proteins
 
   #Make sure row_anno is aligned with matrix
   if (isTRUE(row_anno)) { row_ann<-row_ann[rownames(ht_mtx),,drop=FALSE] }
@@ -861,9 +881,9 @@ plot_heatmap<-function(df,proteins,
 
     #Map labels onto the sorted protein order
     names(protein_labels)<-proteins
-    rownames(ht_mtx)<-protein_labels[sort(proteins)]
+    rownames(ht_mtx)<-protein_labels[proteins]
 
-    if (isTRUE(row_anno)) { rownames(row_ann)<-protein_labels[sort(proteins)] }
+    if (isTRUE(row_anno)) { rownames(row_ann)<-protein_labels[proteins] }
   }
 
   #Default colors and breaks

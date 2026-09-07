@@ -9,12 +9,18 @@ All changes to rppx will be documented below
 
 - plot_heatmap(): safety check to guarantee that grouping_var is a factor with pre-defined levels
 
+- plot_heatmap(): added optional argument row_anno_colors_override to specify the colors used for
+row annotation.
+
 - run_QC_analysis(): new logical strict argument (default=TRUE). This is used when calling clean_protein_names() in this QC wrapper. Previously, strict=TRUE was hardcoded, making run_DE_analysis() to fail.
 
 - run_DE_analysis(): new logical strict argument (default=TRUE) added to this wrapper. his is used when calling clean_protein_names() in this QC wrapper. Previously, strict=TRUE was hardcoded, making run_DE_analysis() to fail.
 
 ### Changed
 - plot_heatmap(): heatmap colnames now use sample identifiers (from col_id, or rownames(df) if col_id is NULL) instead of being coerced to sequential numbers
+
+- plot_heatmap(): added a fallback to colors_anno_row which passes more colors if the user pass
+less colors than the levels of the row annotation variable
 
 - run_QC_analysis(): now strict argument (default=TRUE) allows for function to run without stop if there is an issue with feature names (non-HGCN approved). Use strict=FALSE to prevent function to stop. 
 
@@ -23,6 +29,9 @@ All changes to rppx will be documented below
 - plot_heatmap(): column names in col_ann and ht_mtx were overwritten with seq_len(). This caused heatmaps to display numeric indexes instead of sample identifiers.
 
 - plot_heatmap(): adjusted grouping_var wrangling to not drop unused levels if one is empty
+
+- plot_heatmap(): removed sort() calls when adjusting the order of rows according to row annotation.
+Now, the user can pass the desired row order and it will not be coerced to alphabetical anymore.
 
 - run_DE_analysis(): new strict = strict argument added to qc_results<-run_QC_analysis(). Now  strict argument can be controlled inside run_QC_analysis() from the run_DE_analysis() wrapper.  
 
