@@ -16,10 +16,6 @@ row annotation.
 
 - run_DE_analysis(): new logical strict argument (default=TRUE) added to this wrapper. his is used when calling clean_protein_names() in this QC wrapper. Previously, strict=TRUE was hardcoded, making run_DE_analysis() to fail.
 
-- determine_optimal_quantile(): added the chi-squared statistic from Logrank tests to the output table
-
-- determine_optimal_quantile(): added the chi-squared statistic from Logrank tests to the output message
-
 ### Changed
 - plot_heatmap(): heatmap colnames now use sample identifiers (from col_id, or rownames(df) if col_id is NULL) instead of being coerced to sequential numbers
 
@@ -27,9 +23,6 @@ row annotation.
 less colors than the levels of the row annotation variable
 
 - run_QC_analysis(): now strict argument (default=TRUE) allows for function to run without stop if there is an issue with feature names (non-HGCN approved). Use strict=FALSE to prevent function to stop. 
-
-- determine_optimal_quantile(): sorting of best quantile takes into consideration the
-chi-squared statistic from Logrank tests
 
 ### Fixed
 

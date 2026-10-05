@@ -225,7 +225,6 @@ determine_optimal_quantile<-function(data,feature,time_var,event_var,
           high_group    = paste0(q - split, "/", q),
           n_low_group   = NA,
           n_high_group  = NA,
-          chisq         = 0,
           p_value       = 1.0,
           note          = "invalid split"
         )
@@ -236,7 +235,7 @@ determine_optimal_quantile<-function(data,feature,time_var,event_var,
         data_qt_binary[[time_var]],data_qt_binary[[event_var]])~group,
         data=data_qt_binary)
 
-      p_value<- 1 - stats::pchisq(fit$chisq,df=1)
+      p_value<-stats::pchisq(fit$chisq, df = 1, lower.tail = FALSE)
 
       results[[paste( q , split , sep="_")]]<-data.frame(
         n_quantiles   = q,
@@ -245,7 +244,6 @@ determine_optimal_quantile<-function(data,feature,time_var,event_var,
         high_group    = paste0( q - split, "/", q ),
         n_low_group   = sum(data_qt_binary$group=="Low"),
         n_high_group  = sum(data_qt_binary$group=="High"),
-        chisq         = fit$chisq,
         p_value       = p_value,
         note          = "valid split"
       )
@@ -254,7 +252,7 @@ determine_optimal_quantile<-function(data,feature,time_var,event_var,
   results_data<-dplyr::bind_rows(results) |>
     dplyr::mutate(q_value = stats::p.adjust(p_value,method = padj_method)) |>
     dplyr::filter(note=="valid split") |>
-    dplyr::arrange(q_value,desc(chisq),n_quantiles)
+    dplyr::arrange(q_value,n_quantiles)
 
   #Safety check
   if (nrow(results_data) == 0) {
@@ -265,7 +263,6 @@ determine_optimal_quantile<-function(data,feature,time_var,event_var,
   #Apply best split to the actual data
   best<-results_data[1,]
   cat("\nBest split: ",best$low_group," Low vs ",best$high_group," High",
-      " (Chi-square = ", round(best$chisq,3),
       " p = ",signif(best$p_value,3),
       ", q = ",signif(best$q_value,3),")\n")
 
