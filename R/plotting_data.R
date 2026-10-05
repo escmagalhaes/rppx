@@ -242,12 +242,12 @@ plot_density<-function(df,protein,grouping_var=NULL,line_var_label="Type",
       plot.subtitle          = element_text(size = rel(0.8), face = "italic"),
       legend.title           = element_text(size = rel(0.8)),
       legend.text            = element_text(size = rel(0.7)),
-      legend.key.spacing.y   = unit(0.1 * scale, "cm"),
-      legend.key.size        = unit(0.6 * scale, "cm"),
+      legend.key.spacing.y   = grid::unit(0.1 * scale, "cm"),
+      legend.key.size        = grid::unit(0.6 * scale, "cm"),
       legend.background      = element_rect(fill=NA,color=NA),
       legend.box.background  = element_rect(fill=NA,color=NA),
       legend.key             = element_rect(fill=NA,color=NA),
-      plot.margin            = unit(c(0.1, 0.1, 0.1, 0.1), "cm"),
+      plot.margin            = grid::unit(c(0.1, 0.1, 0.1, 0.1), "cm"),
     )
 
  #Apply themes to density plot
@@ -286,14 +286,14 @@ plot_km<-function(data,time_var,event_var,auto_style=FALSE,grouping_var=NULL,cov
   #Generate model formula according to variables
   if (is.null(grouping_var) && is.null(covar)) {
     #KM curve with no grouping
-    surv_formula<-as.formula(paste0("Surv(",time_var,",",event_var,")~1"))
+    surv_formula<-as.formula(paste0("survival::Surv(",time_var,",",event_var,")~1"))
     int_levels<-NULL
     n_colors<-1L
     n_lt<-1L
 
   } else if (!is.null(grouping_var) && is.null(covar)) {
     #Single grouping variable
-    surv_formula<-as.formula(paste0("Surv(",time_var,",",event_var,")~",grouping_var))
+    surv_formula<-as.formula(paste0("survival::Surv(",time_var,",",event_var,")~",grouping_var))
     int_levels<-levels(data[[grouping_var]])
     n_colors<-length(int_levels)
     n_lt<-1L
@@ -306,7 +306,7 @@ plot_km<-function(data,time_var,event_var,auto_style=FALSE,grouping_var=NULL,cov
     #Generate Interaction variable if covar exists
     data$int_var<-interaction(data[[grouping_var]],data[[covar]]
                               ,lex.order=TRUE,drop=TRUE,sep='\n')
-    surv_formula<-as.formula(paste0("Surv(",time_var,",",event_var,")~int_var"))
+    surv_formula<-as.formula(paste0("survival::Surv(",time_var,",",event_var,")~int_var"))
 
     #All possible combinations vs those that actually exist
     all_combinations<-interaction(data[[grouping_var]],data[[covar]],
@@ -326,7 +326,7 @@ plot_km<-function(data,time_var,event_var,auto_style=FALSE,grouping_var=NULL,cov
 
   } else if (is.null(grouping_var) && !is.null(covar)) {
     #Covar only: single color, linetype varies
-    surv_formula<-as.formula(paste0("Surv(", time_var,",",event_var,")~",covar))
+    surv_formula<-as.formula(paste0("survival::Surv(", time_var,",",event_var,")~",covar))
     int_levels<-levels(data[[covar]])
     n_colors<-1L
     n_lt<-nlevels(data[[covar]])
@@ -414,7 +414,7 @@ plot_km<-function(data,time_var,event_var,auto_style=FALSE,grouping_var=NULL,cov
   }
 
   #Fit surv model & plot
-  mod_fit<-surv_fit(surv_formula,data=data)
+  mod_fit<-survminer::surv_fit(surv_formula,data=data)
 
   #Determine plot and pval_table scale based on panel number
   get_scale<-function(n_panels) {
@@ -423,7 +423,7 @@ plot_km<-function(data,time_var,event_var,auto_style=FALSE,grouping_var=NULL,cov
   scale<-get_scale(n_panels)
 
   #KM plot
-  km_plot<-ggsurvplot(mod_fit,data=data,
+  km_plot<-survminer::ggsurvplot(mod_fit,data=data,
                       legend.title        = " ",
                       legend.labs         = if (!auto_style) legend_labs  else NULL,
                       pal                 = if (!auto_style) pal_vec      else NULL,
@@ -464,11 +464,11 @@ plot_km<-function(data,time_var,event_var,auto_style=FALSE,grouping_var=NULL,cov
     axis.title             = element_text(size = rel(1.1) ),
     axis.text              = element_text(size = rel(0.8) ),
     legend.text            = element_text(size = rel(0.8) ),
-    legend.key.size        = unit( 2.5 * scale ,"line"),
+    legend.key.size        = grid::unit( 2.5 * scale ,"line"),
     legend.background      = element_rect(fill=NA,color=NA),
     legend.box.background  = element_rect(fill=NA,color=NA),
     legend.key             = element_rect(fill=NA,color=NA),
-    plot.margin            = unit(c(0.1, 0.1, 0.1, 0.1), "cm")
+    plot.margin            = grid::unit(c(0.1, 0.1, 0.1, 0.1), "cm")
   )+legend_theme+guides(colour=guide_legend(ncol=ncol_legend))
 
   #Adjust risk table theme
@@ -476,19 +476,19 @@ plot_km<-function(data,time_var,event_var,auto_style=FALSE,grouping_var=NULL,cov
     theme(
       legend.position        = "none",
       legend.text            = element_text( size = rel(0.8) ),
-      legend.key.size        = unit( 2.5 * scale , "line"),
+      legend.key.size        = grid::unit( 2.5 * scale , "line"),
       legend.background      = element_rect(fill=NA,color=NA),
       legend.box.background  = element_rect(fill=NA,color=NA),
       legend.key             = element_rect(fill=NA,color=NA),
       axis.title.x           = element_text(size = rel(0.8) ),
       axis.text              = element_text(size = rel(0.8) ),
-      plot.margin            = unit(c( 0.1, 0.1 ,0.1 ,0.1 ), "cm")
+      plot.margin            = grid::unit(c( 0.1, 0.1 ,0.1 ,0.1 ), "cm")
     )
 
   #Compute pairwise tests
   if (isTRUE(show_pval_table)) {
     pairwise_syms<-symnum(
-      pairwise_survdiff(surv_formula,data=data,p.adjust.method=pval_table_adj_method)$p.value,
+      survminer::pairwise_survdiff(surv_formula,data=data,p.adjust.method=pval_table_adj_method)$p.value,
       cutpoints     = c( 0, 0.001, 0.01, 0.05 ,1 ),
       symbols       = c( "p<0.001", "p<0.01", "p<0.05", "ns" ),
       abbr.colnames = FALSE,
@@ -508,22 +508,22 @@ plot_km<-function(data,time_var,event_var,auto_style=FALSE,grouping_var=NULL,cov
       }), nchar(colnames(pairwise_syms)))
 
     #Pairwise p-value table
-    pval_tab<-tableGrob(
+    pval_tab<-gridExtra::tableGrob(
       pairwise_syms,
-      theme=ttheme_minimal(
+      theme=gridExtra::ttheme_minimal(
         core    = list(fg_params = list(cex  = 1.75 * scale, fontface = 2 ),
                        bg_params = list(fill="white",col="black"),
-                       padding   = unit(c( 10 * scale,  3 * scale), "mm")
+                       padding   = grid::unit(c( 10 * scale,  3 * scale), "mm")
                        ),
         colhead = list(fg_params = list(cex  = 1.25 * scale, col ="white",fontface = 2 ),
                        bg_params = list(fill = col_fills,col=NA),
-                       padding   = unit(c( 10 * scale,  4 * scale), "mm")
+                       padding   = grid::unit(c( 10 * scale,  4 * scale), "mm")
                        ),
         rowhead = list(fg_params = list(cex  = 1.25 * scale, col  = "white",fontface = 2 ),
                        bg_params = list(fill = row_fills, col=NA),
-                       padding   = unit(c( 2 * scale,  3 * scale), "mm")
+                       padding   = grid::unit(c( 2 * scale,  3 * scale), "mm")
                        )
-      )#,widths  = unit(col_widths, "null")
+      )#,widths  = grid::unit(col_widths, "null")
       )
   } else {
     pval_tab<-NULL

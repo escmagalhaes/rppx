@@ -19,7 +19,8 @@ run_QC_analysis(
   check_mad = FALSE,
   cor_cutoff = 0.95,
   ptn_z_thrs = 3,
-  freq_thrs = 0.1
+  freq_thrs = 0.1,
+  strict = TRUE
 )
 }
 \description{

@@ -19,9 +19,11 @@ plot_heatmap(
   rown_anno_vars_labels = NULL,
   colors_ht = NULL,
   covar_colors_override = NULL,
+  col_id = NULL,
+  angle_col = 45,
   colors_anno_col = c(pal_jco()(2)[2:1], "red2", brewer.pal(7, "Dark2")[c(7, 1, 2:6)]),
   colors_anno_row = c(pal_jco()(2)[2:1], "red2", brewer.pal(7, "Dark2")[c(7, 1, 2:6)]),
-  colors_grouping_var = brewer.pal(7, "Dark2"),
+  colors_grouping_var = NULL,
   colors_NA = pal_jco()(3)[3],
   plot_title = NULL,
   cluster_rows = TRUE,
@@ -32,7 +34,8 @@ plot_heatmap(
   protein_labels = NULL,
   show_colnames = FALSE,
   show_rownames = TRUE,
-  annotation_names_row = FALSE
+  annotation_names_row = FALSE,
+  row_anno_colors_override = NULL
 )
 }
 \description{
