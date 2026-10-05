@@ -236,6 +236,7 @@ determine_optimal_quantile<-function(data,feature,time_var,event_var,
         data=data_qt_binary)
 
       p_value<-stats::pchisq(fit$chisq, df = 1, lower.tail = FALSE)
+      #df=1 means degrees of freadom of 1 (comparison between 2 groups: high vs low)
 
       results[[paste( q , split , sep="_")]]<-data.frame(
         n_quantiles   = q,
