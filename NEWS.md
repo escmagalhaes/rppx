@@ -1,4 +1,4 @@
-Changelog
+NEWS/Changelog
 
 All changes to rppx will be documented below
 

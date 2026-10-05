@@ -14,7 +14,7 @@ Description: Designed to work with pre-normalized data derived from
     protein networks (via Cytoscape), univariate and multivariate Cox
     Proportional Hazards models, descriptive tables, plotting functions
     (mainly via ggplot2 and ComplexHeatmap) and data exporting functions.
-License: MIT
+License: MIT + file LICENSE
 URL: https://github.com/escmagalhaes/rppx
 BugReports: https://github.com/escmagalhaes/rppx/issues
 Imports: 
@@ -40,6 +40,7 @@ Imports:
     grid,
     gridExtra,
     gt,
+    gtforester,
     gtsummary,
     HGNChelper,
     httr2,
@@ -53,6 +54,7 @@ Imports:
     parallel,
     pheatmap,
     plyr,
+    progenyClust,
     purrr,
     qs2,
     quarto,

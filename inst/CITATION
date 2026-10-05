@@ -1,12 +1,12 @@
 bibentry(
   bibtype = "Manual",
-  title = rppx: data analysis toolkit for pre-normalized proteogenomics data,
-  author =  person(
+  title = "rppx: data analysis toolkit for pre-normalized proteogenomics data",
+  author =  c(person(
    given   = "Eduardo Sabino",
    family  = "de Camargo Magalhães",
    email   = "escmagalhaes@gmail.com",
    role    = c("aut", "cre"),
-   comment = c(ORCID = "0000-0002-7726-4827")),
+   comment = c(ORCID = "0000-0002-7726-4827"))),
   year = format(Sys.Date(), "%Y"),
   version = as.character(packageVersion("rppx")),
   url = https://github.com/escmagalhaes/rppx,
