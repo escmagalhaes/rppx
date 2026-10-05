@@ -213,7 +213,24 @@ determine_optimal_quantile<-function(data,feature,time_var,event_var,
 
       #Make sure quantile groups have enough cases, otherwise stop
       grp_counts<-table(data_qt_binary$group)
-      if (length(grp_counts) < 2 || any(grp_counts==0)) { next }
+
+      #Define test_id to align column names
+      test_id<-paste( q , split , sep="_")
+
+      if (length(grp_counts) < 2 || any(grp_counts==0)) {
+        results[[test_id]]<-data.frame(
+          n_quantiles   = q,
+          split_point   = split,
+          low_group     = paste0(split, "/", q),
+          high_group    = paste0(q - split, "/", q),
+          n_low_group   = NA,
+          n_high_group  = NA,
+          chisq         = 0,
+          p_value       = 1.0,
+          note          = "invalid split"
+        )
+        next
+        }
 
       fit<-survival::survdiff(survival::Surv(
         data_qt_binary[[time_var]],data_qt_binary[[event_var]])~group,
@@ -222,19 +239,22 @@ determine_optimal_quantile<-function(data,feature,time_var,event_var,
       p_value<- 1 - stats::pchisq(fit$chisq,df=1)
 
       results[[paste( q , split , sep="_")]]<-data.frame(
-        n_quantiles   =  q ,
+        n_quantiles   = q,
         split_point   = split,
         low_group     = paste0(split, "/", q ),
         high_group    = paste0( q - split, "/", q ),
         n_low_group   = sum(data_qt_binary$group=="Low"),
         n_high_group  = sum(data_qt_binary$group=="High"),
-        p_value       = round(p_value,4)
+        chisq         = fit$chisq,
+        p_value       = p_value,
+        note          = "valid split"
       )
     }
   }
   results_data<-dplyr::bind_rows(results) |>
     dplyr::mutate(q_value = stats::p.adjust(p_value,method = padj_method)) |>
-    dplyr::arrange(q_value,p_value,n_quantiles)
+    dplyr::filter(note=="valid split") |>
+    dplyr::arrange(q_value,desc(chisq),n_quantiles)
 
   #Safety check
   if (nrow(results_data) == 0) {
@@ -244,9 +264,9 @@ determine_optimal_quantile<-function(data,feature,time_var,event_var,
 
   #Apply best split to the actual data
   best<-results_data[1,]
-  cat("\nBest split: ",best$low_group,
-      " Low vs ",best$high_group," High",
-      " (p = ",signif(best$p_value,3),
+  cat("\nBest split: ",best$low_group," Low vs ",best$high_group," High",
+      " (Chi-square = ", round(best$chisq,3),
+      " p = ",signif(best$p_value,3),
       ", q = ",signif(best$q_value,3),")\n")
 
   best_var<-paste0(feature,"_gp",best$n_quantiles)
