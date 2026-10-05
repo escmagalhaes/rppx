@@ -2,13 +2,12 @@ bibentry(
   bibtype = "Manual",
   title = "rppx: data analysis toolkit for pre-normalized proteogenomics data",
   author =  c(person(
-   given   = "Eduardo Sabino",
+   given   = c("Eduardo","Sabino"),
    family  = "de Camargo Magalhães",
    email   = "escmagalhaes@gmail.com",
    role    = c("aut", "cre"),
    comment = c(ORCID = "0000-0002-7726-4827"))),
   year = format(Sys.Date(), "%Y"),
   version = meta$Version,
-  url = "https://github.com/escmagalhaes/rppx",
   doi = "10.5281/zenodo.22119850"
 )
