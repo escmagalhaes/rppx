@@ -1237,4 +1237,50 @@ interleave_results<-function(list_of_lists,protein_names=NULL,
   return(combined)
 }
 
+#' Function to create barplots
+#' @export
+#' @examples
+#' ## Placeholder Example ##
+plot_bars<-function(df,x_var,y_var,fill_var,x_angle=45,legend_name=NULL,
+                    title=NULL,y_lab=NULL,x_lab=NULL,barcolors=NULL,
+                    legend_position="bottom",bar_type=c("dodge","stack")){
+
+  bar_type<-match.arg(bar_type)
+
+  if (is.null(barcolors)){
+    barcolors<-get_mycolors(n_colors=nlevels(df[[fill_var]]),mode="vector")
+  }
+
+  if (bar_type=="dodge"){
+    bar_type<-position_dodge(width=0.7)
+  }
+
+
+  ggplot(data=df,aes(x=.data[[x_var]],y=.data[[y_var]],fill=.data[[fill_var]]))+
+    ggtitle(title)+scale_y_continuous(expand=expansion(mult=c(0,0.05)),limits=c(0,100))+
+    geom_bar(color='black',position=bar_type,stat="identity",linewidth=0.1)+
+    labs(y=y_lab,x=x_lab)+scale_fill_manual(name=legend_name,values=barcolors)+
+    theme(plot.title=element_text(size=12,hjust=0,face='bold',color='black',margin=margin(t=1,r=0,b=5,l=0))
+          ,axis.text.x=element_text(angle=x_angle,hjust=1,vjust=1,size=12,face="bold",color='black',margin=margin(t=0,r=0,b=0,l=0))
+          ,axis.title.x=element_text(size=12,face="bold",margin=margin(t=2,r=0,b=0,l=0))
+          ,axis.line=element_line(linewidth=0.25,linetype="solid",colour="black")
+          ,axis.ticks=element_line(linewidth=0.25)
+          ,axis.ticks.length=unit(0.025,"cm")
+          ,aspect.ratio=1/1
+          ,legend.position=legend_position
+          ,legend.title=element_text(face="bold")
+          ,legend.position.inside=c(0.8,0.25)
+          ,legend.text=element_text(face="bold")
+          ,legend.key.spacing.y=unit(0.1,"lines")
+          ,legend.margin=margin(t=0,r=0,b=0,l=0,unit="cm")
+          ,legend.key.size=unit(0.5,"lines")
+          ,legend.box.margin=margin(t=0,r=0,b=0,l=0,unit="cm")
+          ,axis.title.y=element_blank()
+          ,panel.background=element_blank()
+          ,panel.grid.major=element_blank()
+          ,panel.grid.minor=element_blank()
+          ,panel.border=element_blank()
+    )+guides(fill=guide_legend(byrow=TRUE))
+}
+
 

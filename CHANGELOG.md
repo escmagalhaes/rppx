@@ -16,6 +16,10 @@ row annotation.
 
 - run_DE_analysis(): new logical strict argument (default=TRUE) added to this wrapper. his is used when calling clean_protein_names() in this QC wrapper. Previously, strict=TRUE was hardcoded, making run_DE_analysis() to fail.
 
+- plot_bars(): function to create barplots with ggplot2 according to package style
+
+- plot_corr(): function to create correlation plots with ggplot2 according to package style
+
 ### Changed
 - plot_heatmap(): heatmap colnames now use sample identifiers (from col_id, or rownames(df) if col_id is NULL) instead of being coerced to sequential numbers
 

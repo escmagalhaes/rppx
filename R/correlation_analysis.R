@@ -124,6 +124,160 @@ wf_plot<-function(df,type=c('Positive','Negative'),abs_cutoff=0.20){
   return(wfplot)
 }
 
+#' Function to generate correlation plots
+#' @export
+#' @examples
+#' ## Placeholder Example ##
+plot_corr<-function(df,proteins_of_interest,
+                    proteins_of_interest_col="query_protein",partner_proteins_col="protein",
+                    corr_col="corr",is_significant_col="is_signif",qvalue_col="qval",
+                    only_significant=FALSE,display_mode=c("lower_triangle","upper_triangle","full"),
+                    show_legend=TRUE,x_axis_text_angle=45,n_panels=1,plot_title=NULL,na_color="grey90",
+                    corr_colors=colorRampPalette(c(
+                      "#053061","#2166AC","#4393C3","#92C5DE","#D1E5F0","#FFFFFF","#FDDBC7","#F4A582"
+                      ,"#D6604D","#B2182B","#67001F"))(200)) {
+
+  display_mode<-match.arg(display_mode)
+
+  #Define plot scale accoding to panels using helper function
+  get_scale<-function(n_panels) {
+    return(min(1, 1 / sqrt(n_panels) * 1.5))
+  }
+  scale<-get_scale(n_panels)
+
+  #Adjust plot text according to number of proteins
+  n_prot<-length(proteins_of_interest)
+  tile_text_size<-max(2, 40 / n_prot) * scale
+  axis_text_size<-max(10, (100 / n_prot) ) * scale
+
+  #Filter for proteins_of_interest
+  plot_df<-df |>
+    dplyr::filter(
+      .data[[proteins_of_interest_col]] %in% proteins_of_interest,
+      .data[[partner_proteins_col]]     %in% proteins_of_interest
+    ) |>
+    dplyr::rename(
+      query_protein  = all_of(proteins_of_interest_col),
+      partner        = all_of(partner_proteins_col),
+      corr           = all_of(corr_col),
+      is_significant = all_of(is_significant_col),
+      qvalue         = all_of(qvalue_col)
+    ) |>
+    dplyr::select(query_protein,partner,corr,is_significant,qvalue,everything())
+
+  #Safety check
+  if (nrow(plot_df)==0) {
+    stop("Dataframe has zero rows after filtering. Double-check protein names.")
+  }
+
+  #Tile labels
+  #is_significant defines whether any star is show and qvalues determine how many stars.
+  plot_df<-plot_df |>
+    dplyr::mutate(
+      corr_label = formatC(round(corr,2),format="f",digits=2),
+      sig_label  = case_when(
+        !is_significant ~ "",
+        qvalue < 0.001  ~ "***",
+        qvalue < 0.01   ~ "**",
+        TRUE            ~ "*"
+      ),corr_plot=ifelse(only_significant & !is_significant,NA_real_,corr))
+
+  #Remove diagonal
+  plot_df<-plot_df |>  dplyr::filter(query_protein != partner)
+
+  #Apply data masking
+  prot_order<-proteins_of_interest
+
+  if (display_mode != "full") {
+    full_grid<-expand.grid(
+      query_protein    = prot_order,
+      partner          = prot_order,
+      stringsAsFactors = FALSE) |>
+      dplyr::mutate(
+        row_idx = match(query_protein, prot_order),
+        col_idx = match(partner,       prot_order))
+
+    plot_df<-plot_df |>
+      dplyr::left_join(full_grid |> dplyr::select(query_protein,partner,row_idx,col_idx),
+                       by=c("query_protein","partner"))
+
+    if (display_mode=="lower_triangle") {
+      plot_df<-plot_df |> dplyr::filter(row_idx > col_idx)
+    } else {
+      plot_df<-plot_df |> dplyr::filter(row_idx < col_idx)
+    }
+    plot_df<-plot_df |> dplyr::select(-row_idx,-col_idx)
+  }
+
+  #Deduplicate for safety
+  plot_df<-plot_df |> dplyr::mutate(canonical_pair=mapply(
+    function( a, b ) paste(sort(c( a, b )),collapse="_"),
+    query_protein,partner,USE.NAMES=FALSE)) |>
+    distinct(canonical_pair, .keep_all=TRUE) |> dplyr::select(-canonical_pair)
+
+  #Safety Check
+  if (nrow(plot_df)==0) {
+    stop("No rows remain after data masking.")
+  }
+
+  #Factor levels for consistent axis ordering
+  plot_df<-plot_df |> dplyr::mutate(
+    query_protein=factor(query_protein,levels=rev(prot_order)),
+    partner=factor(partner,levels=prot_order))
+
+  #Generate plot
+  corr_plot<-ggplot(plot_df,aes(x=partner,y=query_protein,fill=corr_plot))+
+    geom_tile()+labs(title=plot_title,x=NULL,y=NULL)+
+    geom_text(aes(label=sig_label),vjust=1.8,size=tile_text_size,color="black")+
+    geom_text(aes(label=corr_label),vjust=0,fontface="bold",size=tile_text_size,color="black")+
+    scale_fill_gradientn(colors=corr_colors,limits=c(-1,1),na.value=na_color,name="Correlation")+
+    theme_classic(base_size= 18 * scale
+                  ,base_line_size=max(0.2, 0.3 * scale)
+                  ,base_rect_size=max(0.2, 0.3 * scale))+coord_fixed()
+
+  #Adjust themes
+  base_theme<-theme(
+    plot.title             = element_text(size = rel(1) ),
+    plot.background        = element_rect(fill="white",color=NA),
+    plot.margin            = margin(t=0.1,r=0.25,b=0.1,l=0.25,unit="cm"),
+    panel.grid             = element_blank(),
+    axis.title             = element_blank(),
+    axis.text.y            = element_text(size=axis_text_size,hjust=1,vjust=1),
+    axis.text.x            = element_text(angle=x_axis_text_angle,size=axis_text_size,hjust=1,vjust=1),
+    legend.title           = element_text(size = rel(1.8) * scale),
+    legend.text            = element_text(size = rel(1.5) * scale),
+    legend.margin          = margin(t=0.1,r=0.1,b=0.1,l=0.1,unit="cm"),
+    legend.key             = element_rect(fill=NA,color=NA),
+    legend.background      = element_rect(fill=NA,color=NA),
+    legend.box.background  = element_rect(fill=NA,color=NA),
+    legend.box.margin      = margin(t=0.1,r=0.25,b=0.1,l=0.1,unit="cm"),
+    legend.box.spacing     = unit( 0.2 * scale, "cm")
+  )
+
+  if (show_legend) {
+    legend_theme<-theme(
+      legend.position    = "bottom",
+      legend.key.width   = unit(1, "null"),  # stretches to fill available width
+      legend.key.height  = unit(0.3, "cm"))
+
+    legend_guide<-guides(
+      fill = guide_colorbar(
+        title.position = "left",
+        title.vjust    = 1,
+        title.hjust    = 1,
+        barwidth       = unit(1, "null")))
+
+    corr_plot<-corr_plot+base_theme+legend_theme+legend_guide
+
+  } else {
+    legend_theme<-theme(legend.position = "none")
+    corr_plot<-corr_plot+base_theme+legend_theme
+  }
+
+  return(list(corr_plot=corr_plot,corr_plot_df=plot_df))
+}
+
+
 #' Function to generate scatter plots
 #' @export
 #' @examples
