@@ -241,13 +241,17 @@ plot_density<-function(df,protein,grouping_var=NULL,line_var_label="Type",
       axis.title             = element_text(size = rel(1.1) ),
       plot.subtitle          = element_text(size = rel(0.8), face = "italic"),
       legend.title           = element_text(size = rel(0.8)),
-      legend.text            = element_text(size = rel(0.7)),
-      legend.key.spacing.y   = grid::unit(0.1 * scale, "cm"),
-      legend.key.size        = grid::unit(0.6 * scale, "cm"),
+      legend.text            = element_text(size = rel(0.8) ),
+      legend.margin          = margin( 0, 0, 0, 0 ),
+      legend.spacing.y       = grid::unit( 0.2 * scale, "cm"),
+      legend.key.spacing.y   = grid::unit( 0.1 * scale, "cm"),
+      legend.key.size        = grid::unit( 0.6 * scale, "cm"),
+      legend.key             = element_rect(fill=NA,color=NA),
       legend.background      = element_rect(fill=NA,color=NA),
       legend.box.background  = element_rect(fill=NA,color=NA),
-      legend.key             = element_rect(fill=NA,color=NA),
-      plot.margin            = grid::unit(c(0.1, 0.1, 0.1, 0.1), "cm"),
+      legend.box.margin      = margin( 0, 0, 0, 0 ),
+      legend.box.spacing     = grid::unit( 0.2 * scale, "cm"),
+      plot.margin            = grid::unit(c( 0.1, 0.1, 0.1, 0.1 ), "cm")
     )
 
  #Apply themes to density plot
@@ -438,14 +442,14 @@ plot_km<-function(data,time_var,event_var,auto_style=FALSE,grouping_var=NULL,cov
                       tables.col          = "strata",
                       risk.table          = risk_table,
                       risk.table.fontsize = NULL,
-                      size                = 1 * scale,
-                      fontsize            = 10 * scale,
+                      size                = 1.25 * scale,
+                      fontsize            = 12 * scale,
                       add.all             = add_overall,
                       pval                = TRUE,
                       pval.coord          = pval_coord,
-                      pval.size           = 6 * scale,
-                      censor.size         = 5 * scale,
-                      ggtheme=theme_classic(base_size= 13 * scale
+                      pval.size           = 8 * scale,
+                      censor.size         = 7 * scale,
+                      ggtheme=theme_classic(base_size= 18 * scale
                                             ,base_line_size=max(0.2, 0.3 * scale)
                                             ,base_rect_size=max(0.2, 0.3 * scale))
   )
@@ -464,11 +468,15 @@ plot_km<-function(data,time_var,event_var,auto_style=FALSE,grouping_var=NULL,cov
     axis.title             = element_text(size = rel(1.1) ),
     axis.text              = element_text(size = rel(0.8) ),
     legend.text            = element_text(size = rel(0.8) ),
+    legend.margin          = margin( 0, 0, 0, 0 ),
+    legend.spacing.y       = grid::unit( 0.2 * scale, "cm"),
     legend.key.size        = grid::unit( 2.5 * scale ,"line"),
+    legend.key             = element_rect(fill=NA,color=NA),
     legend.background      = element_rect(fill=NA,color=NA),
     legend.box.background  = element_rect(fill=NA,color=NA),
-    legend.key             = element_rect(fill=NA,color=NA),
-    plot.margin            = grid::unit(c(0.1, 0.1, 0.1, 0.1), "cm")
+    legend.box.margin      = margin(0, 0, 0, 0),
+    legend.box.spacing     = grid::unit( 0.2 * scale, "cm"),
+    plot.margin            = grid::unit(c( 0.1, 0.1, 0.1, 0.1 ), "cm")
   )+legend_theme+guides(colour=guide_legend(ncol=ncol_legend))
 
   #Adjust risk table theme
