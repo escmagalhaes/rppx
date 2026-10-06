@@ -43,7 +43,7 @@ Now, the user can pass the desired row order and it will not be coerced to alpha
 
 - determine_optimal_quantile(): q- and p-values being rounded only in the final results table
 
-- plot_km(): added "pkg::" before function calls and adjusted theme, including scales
+- plot_km(): added "pkg::" before function calls and adjusted theme, including scales, adjusted order of colors in "colors" argument
 
 - plot_density(): adjusted ggplot theme
 
