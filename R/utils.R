@@ -142,8 +142,8 @@ get_mycolors<-function(n_colors=NULL,mode=c("list","vector")
 
   #Default colors
   default_color_vector<-c(
-    'red2','blue3','green4','purple2','darkorange','darkcyan',
-    'darkgoldenrod3','yellow2','deeppink2','lightsalmon2','darkturquoise'
+    'red2','blue3','green4','purple2','darkorange','darkturquoise',
+    'darkgoldenrod3','yellow2','deeppink2','lightsalmon2','darkcyan'
   )
 
   default_color_list<-list(

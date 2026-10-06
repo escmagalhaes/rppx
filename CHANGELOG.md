@@ -28,6 +28,8 @@ less colors than the levels of the row annotation variable
 
 - run_QC_analysis(): now strict argument (default=TRUE) allows for function to run without stop if there is an issue with feature names (non-HGCN approved). Use strict=FALSE to prevent function to stop. 
 
+- get_mycolors(): changed color order in "vector" mode ('darkturquoise' is now at the 6th position and 'darkcyan' at 10th)
+
 ### Fixed
 
 - plot_heatmap(): column names in col_ann and ht_mtx were overwritten with seq_len(). This caused heatmaps to display numeric indexes instead of sample identifiers.
