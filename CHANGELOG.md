@@ -4,6 +4,8 @@ All changes to rppx will be documented below
 
 ## [Unreleased]
 
+## [0.1.4-beta] - 2026-10-18
+
 ### Added
 - plot_heatmap(): new optional col_id argument to specify the column with sample identifiers. Used when heatmap colnames need to show sample identifiers.
 
@@ -47,8 +49,7 @@ Now, the user can pass the desired row order and it will not be coerced to alpha
 
 - plot_density(): adjusted ggplot theme
 
-[0.1.3-beta] - 2026-08-26
+## [0.1.3-beta] - 2026-08-26
 
-Added
-
+### Added
 Initial public beta release.
