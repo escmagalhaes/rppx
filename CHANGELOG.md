@@ -4,6 +4,10 @@ All changes to rppx will be documented below
 
 ## [Unreleased]
 
+### Changed
+- determine_optimal_quantile(): p-values are now used as seconde level sorting parameter to determine the best quantile split in `dplyr::arrange(q_value,p_value,n_quantiles)`
+
+
 ## [0.1.4-beta] - 2026-10-18
 
 ### Added

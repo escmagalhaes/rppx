@@ -253,7 +253,7 @@ determine_optimal_quantile<-function(data,feature,time_var,event_var,
   results_data<-dplyr::bind_rows(results) |>
     dplyr::mutate(q_value = stats::p.adjust(p_value,method = padj_method)) |>
     dplyr::filter(note=="valid split") |>
-    dplyr::arrange(q_value,n_quantiles)
+    dplyr::arrange(q_value,p_value,n_quantiles)
 
   #Safety check
   if (nrow(results_data) == 0) {
