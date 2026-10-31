@@ -5,7 +5,10 @@
 #' @examples
 #' ## Placeholder Example ##
 get_cbio_data<-function(study_id,main_cache_path,
-                        cache=TRUE,verbose=TRUE,force=FALSE) {
+                        cbio_cache_version = "v1",
+                        cache              = TRUE,
+                        verbose            = TRUE,
+                        force              = FALSE) {
 
   #Create study directory
   if(verbose) cat("\nCreating study folders for",study_id,"\n")
@@ -16,7 +19,7 @@ get_cbio_data<-function(study_id,main_cache_path,
 
   #Return Cached files if requested and existant
   if (cache) {
-    cache_version<-.cbio_cache_version
+    cache_version<-cbio_cache_version
     cache_file<-file.path(study_directory,paste0(study_id, "_",cache_version,".qs2"))
     if (!force && file.exists(cache_file)) {
       if (verbose) cat("\nLoading cached study:",study_id,"\n")
@@ -72,16 +75,22 @@ get_cbio_data<-function(study_id,main_cache_path,
 #' @examples
 #' ## Placeholder Example ##
 get_study_data<-function(data,study_id,main_cache_path,
-                         assay_names=NULL,assay_labels=NULL,
-                         patient_id_col="PATIENT_ID",sample_id_col="SAMPLE_ID",
-                         verbose=TRUE,cache=TRUE,force=FALSE) {
+                         assay_names    = NULL,
+                         assay_labels   = NULL,
+                         patient_id_col = "PATIENT_ID",
+                         sample_id_col  = "SAMPLE_ID",
+                         verbose        = TRUE,
+                         cache          = TRUE,
+                         force          = FALSE) {
 
   if (cache) {
     if (is.null(main_cache_path))
       stop("main_cache_path must be provided when cache = TRUE")
     cache_path <-file.path(main_cache_path,study_id)
     if (!dir.exists(cache_path)) { dir.create(cache_path,recursive=TRUE) }
-    cache_key  <-digest::digest(sort(assay_names),algo="xxhash32")
+    cache_key  <-digest::digest(
+      list(assay_names,assay_labels,patient_id_col,sample_id_col),
+      algo="xxhash32")
     cache_file <-file.path(cache_path,paste0(study_id,"_",cache_key,".qs2"))
 
     if (!force && file.exists(cache_file)) {
@@ -96,7 +105,8 @@ get_study_data<-function(data,study_id,main_cache_path,
   if(!is.null(assay_names)){
     missing_assay_names<-setdiff(assay_names,names(data))
     if(length(missing_assay_names) > 0)
-      stop("These assay_names were not found in data:",missing_assay_names,
+      stop("These assay_names were not found in data:",
+           paste(missing_assay_names,collapse=", "),
            "- Double check 'ExperimentList' item names")
   } else {
     warning("\nArgument assay_names not specified. Returning full data\n")
@@ -135,7 +145,7 @@ get_study_data<-function(data,study_id,main_cache_path,
 
     #Add Patient IDs to data matrix
     final_mtx<-right_join(data_map_filt,raw_mtx_adj,by=c("colname"="colname")) |>
-      dplyr::rename(!!patient_id_col := primary, !!sample_id_col := colname)
+      dplyr::rename(!!patient_id_col := "primary", !!sample_id_col := "colname")
   })
   names(expr_list)<-assay_names
 

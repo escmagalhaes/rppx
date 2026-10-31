@@ -4,24 +4,44 @@
 #' @export
 #' @examples
 #' ## Placeholder Example ##
-build_string_network<-function(input_table,mode=c("multi","single"),
-                               first_neighbors=FALSE,hide_singletons=TRUE,
-                               show_first_neighbors=FALSE,
-                               neighbor_min_connections=string_neighbor_min_connections,
-                               neighbor_score_threshold=string_neighbor_score_threshold,
-                               net_proteins=NULL,wait_for_layout_adj=TRUE){
+build_string_network<-function(input_table,stringdb_cache_path,
+                               mode = c("multi","single"),
+                               first_neighbors          = FALSE,
+                               hide_singletons          = TRUE,
+                               show_first_neighbors     = FALSE,
+                               neighbor_min_connections = 4,
+                               neighbor_score_threshold = 700,
+                               stringdb_version         = "11.5",
+                               stringdb_score_threshold = 400,
+                               stringdb_species         = 9606,
+                               net_proteins             = NULL,
+                               wait_for_layout_adj      = TRUE){
 
   mode<-match.arg(mode)
 
   #Get STRING data based on mode
-  string_data<- if (mode=="single") {
-    get_single_ptn_network(input_table,first_neighbors=first_neighbors,
-                           neighbor_min_connections=neighbor_min_connections,
-                           neighbor_score_threshold=neighbor_score_threshold)
+  string_data<-if (mode == "single") {
+    get_single_ptn_network(
+      input_table,
+      stringdb_cache_path      = stringdb_cache_path,
+      first_neighbors          = first_neighbors,
+      neighbor_min_connections = neighbor_min_connections,
+      neighbor_score_threshold = neighbor_score_threshold,
+      stringdb_version         = stringdb_version,
+      stringdb_score_threshold = stringdb_score_threshold,
+      stringdb_species         = stringdb_species
+      )
   } else {
-    get_stringdb_data(input_table,first_neighbors=first_neighbors,
-                      neighbor_min_connections=neighbor_min_connections,
-                      neighbor_score_threshold=neighbor_score_threshold)
+    get_stringdb_data(
+      input_table,
+      stringdb_cache_path      = stringdb_cache_path,
+      first_neighbors          = first_neighbors,
+      neighbor_min_connections = neighbor_min_connections,
+      neighbor_score_threshold = neighbor_score_threshold,
+      stringdb_version         = stringdb_version,
+      stringdb_score_threshold = stringdb_score_threshold,
+      stringdb_species         = stringdb_species
+      )
   }
 
   #Filter out first neighbors from network if requested
@@ -40,7 +60,11 @@ build_string_network<-function(input_table,mode=c("multi","single"),
   }
 
   #Create base network
-  create_base_network(nodes_display,edges_display,hide_singletons=hide_singletons)
+  create_base_network(
+    nodes_display,
+    edges_display,
+    hide_singletons = hide_singletons
+    )
 
   #Store full node and edge table in case of first neighbors=TRUE
   string_data$nodes_display<-nodes_display
@@ -66,20 +90,29 @@ build_string_network<-function(input_table,mode=c("multi","single"),
   #Modify node shape conditionally
   if (first_neighbors) {
     string_data$nodes<-string_data$nodes |>
-      dplyr::mutate(node_shape_group=dplyr::case_when(is_ptm~"ptm",is_neighbor~ "neighbor",TRUE~ "core"))
+      dplyr::mutate(node_shape_group = dplyr::case_when(
+        is_ptm~"ptm",is_neighbor~ "neighbor",TRUE~ "core")
+        )
   } else {
     string_data$nodes<-string_data$nodes |>
-      dplyr::mutate(node_shape_group=dplyr::case_when(is_ptm~"ptm",TRUE~"core"))
+      dplyr::mutate(node_shape_group = dplyr::case_when(
+        is_ptm~"ptm",TRUE~"core")
+        )
   }
 
   #Attach node data
-  loadTableData(string_data$nodes,table="node",table.key.column="id",data.key.column="id")
+  loadTableData(
+    string_data$nodes,
+    table            = "node",
+    table.key.column = "id",
+    data.key.column  = "id"
+    )
 
   #Initial layout and time to adjust it
   apply_base_visual_style(first_neighbors=first_neighbors)
   layoutNetwork('force-directed')  #recalculates layout for better spread after hub sizing
 
-  if(wait_for_layout_adj){
+  if(wait_for_layout_adj && interactive()){
     message("Adjust network layout manually if needed.")
     readline("Press ENTER when finished...")
   }
@@ -91,8 +124,12 @@ build_string_network<-function(input_table,mode=c("multi","single"),
 #' @export
 #' @examples
 #' ## Placeholder Example ##
-set_contrast<-function(contrast,filename,edge_palette=NULL,wait_for_legend=TRUE
-                       ,expr_col=NULL,width_col=NULL,class_col=NULL){
+set_contrast<-function(contrast,filename,
+                       edge_palette    = NULL,
+                       wait_for_legend = TRUE,
+                       expr_col        = NULL,
+                       width_col       = NULL,
+                       class_col       = NULL){
 
   if(length(getNetworkList())==0){
     stop("No Cytoscape network detected. Run build_string_network() first.")
@@ -118,11 +155,17 @@ set_contrast<-function(contrast,filename,edge_palette=NULL,wait_for_legend=TRUE
   }
 
   #Apply visual contrast
-  apply_visual_contrast(contrast,color_edges=color_edges
-                        ,edge_sets=edge_sets,edge_palette=edge_palette
-                        ,expr_col=expr_col,width_col=width_col,class_col=class_col)
+  apply_visual_contrast(
+    contrast,
+    color_edges  = color_edges,
+    edge_sets    = edge_sets,
+    edge_palette = edge_palette
+    ,expr_col    = expr_col,
+    width_col    = width_col,
+    class_col    = class_col
+    )
 
-  if(wait_for_legend){
+  if(wait_for_legend && interactive()){
     message("Add Legends manually in Cytoscape if needed.")
     readline("Press ENTER when finished...")
   }

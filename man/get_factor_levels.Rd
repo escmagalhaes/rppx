@@ -2,13 +2,63 @@
 % Please edit documentation in R/preprocessing_data.R
 \name{get_factor_levels}
 \alias{get_factor_levels}
-\title{Function to get factor levels from main datatable and add it to metatable}
+\title{Add factor levels to a metadata table}
 \usage{
-get_factor_levels(df, meta_table)
+get_factor_levels(data, meta_table)
+}
+\arguments{
+\item{data}{A data frame or tibble containing the variables described
+in \code{meta_table}. Factor columns will be inspected for their levels.}
+
+\item{meta_table}{A data frame with at least a \code{variable} column
+containing column names from \code{data}. Expected to also contain
+\code{label}, \code{type}, and \code{class} columns. Typically created manually
+to describe all variables in the dataset (see Details below).}
+}
+\value{
+The input \code{meta_table} with a new \code{factor_levels} column
+added, containing the factor levels for each variable as a
+pipe-separated string (e.g. \code{"low|medium|high"}). Non-factor
+variables receive \code{NA}.
 }
 \description{
-Function to get factor levels from main datatable and add it to metatable
+Identify features that are classified as factors in a data frame and
+appends their levels to the corresponding rows in a metadata table.
+Designed to enrich a manually curated metadata table after data has
+been loaded and factors have been determined.
+}
+\details{
+The metadata table (\code{meta_table}) is a manually curated data frame
+that acts as the central registry of all variables in the dataset.
+Beyond \code{variable} and \code{label}, it typically contains columns such as:
+\itemize{
+\item \code{type} — variable type (\code{"continuous"}, \code{"binary"}, \code{"categorical"})
+\item \code{class} — R class (\code{"factor"}, \code{"numeric"}, \code{"integer"})
+\item \code{role} — statistical role (\code{"predictor"}, \code{"event"}, \code{"time"}, \code{"exposure"})
+\item \code{block_table}, \code{block_models} — grouping for tables and models
+\item \code{include_table}, \code{include_uv_model}, \code{include_mv_model} — inclusion flags
+\item \code{forced}, \code{priority} — model selection controls
+}
+
+\code{get_factor_levels()} is typically called once during data setup,
+after factors have been assigned, to save the level structure
+into the metadata table for downstream use.
 }
 \examples{
-## Placeholder Example ##
+my_data<-data.frame(
+  grade  = factor(c("low","high","medium"),levels=c("low","medium","high")),
+  status = factor(c("alive","dead","alive")),
+  age    = c(45,67,52)
+)
+meta<-data.frame(
+  variable = c("grade","status","age"),
+  label    = c("Tumour grade","Vital status","Age (years)"),
+  type     = c("categorical","binary","continuous"),
+  class    = c("factor","factor","numeric")
+)
+get_factor_levels(data=my_data,meta_table=meta)
+
+}
+\seealso{
+\code{\link[=adjust_datatable]{adjust_datatable()}}
 }

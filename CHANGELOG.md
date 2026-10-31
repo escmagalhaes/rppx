@@ -5,7 +5,81 @@ All changes to rppx will be documented below
 ## [Unreleased]
 
 ### Changed
-- determine_optimal_quantile(): p-values are now used as seconde level sorting parameter to determine the best quantile split in `dplyr::arrange(q_value,p_value,n_quantiles)`
+- get_mycolors(): changed function name to get_colors() and added roxygen documentation
+
+- clean_protein_names(): added roxygen documentation
+
+- get_rawtable_values(): added roxygen documentation
+
+- safe_clean_raw_data(): added roxygen documentation
+
+- get_feature_dataset(): added roxygen documentation
+
+- get_feature_dataset(): added roxygen documentation
+
+- get_factor_levels(): added roxygen documentation and adjusted arguments
+
+- remove_extra_terms(): added roxygen documentation
+
+- adjust_datatable(): added roxygen documentation and added `date_format` argument
+
+- determine_optimal_quantile(): added roxygen documentation and p-values are now used as second level sorting parameter to determine the best quantile split in `dplyr::arrange(q_value,p_value,n_quantiles)` and performed other small fixes
+
+- get_quantile_groups(): added roxygen documentation and performed small fixes
+
+- collapse_quantile_groups(): added roxygen documentation and performed small fixes
+
+- get_var_groups(): added roxygen documentation and altered behavior to fit into get_subsets() and create_all_subsets() pipeline and performed small fixes
+
+- get_subsets(): added roxygen documentation and altered behavior to fit into get_var_groups() and create_all_subsets() pipeline and performed small fixes
+
+- create_all_subsets(): added roxygen documentation and altered behavior to fit into get_var_groups() and get_subsets() pipeline and performed small fixes
+
+### Fixed
+- manuscript_export(): small adjustments
+
+- render_manuscript(): small adjustments
+
+- filter_lookup_table(): small adjustments
+
+- make_float_chunks(): small adjustments
+
+- plot_density(): adjusted get_mycolors() calls to get_colors()
+
+- get_stringdb_data(): adjusted arguments
+
+- create_base_network(): adjusted arguments
+
+- apply_base_visual_style(): small adjustments
+
+- highlight_edge_sets(): small adjustments
+
+- apply_visual_contrast(): small adjustments
+
+- get_single_ptn_network(): adjusted arguments
+
+- compare_ref_network(): adjusted arguments
+
+- build_string_network(): adjusted arguments
+
+- set_contrast(): small adjustments
+
+- get_cbio_data(): adjusted arguments
+
+- plot_heatmap(): adjusted get_mycolors() calls to get_colors() and adjusted `colors_anno_col` and `colors_anno_row` arguments by calling ggsci::pal_jco()
+
+- create_bxplot(): added package calling ggpubr::stat_compare_means()
+
+- plot_delta_volcano(): added package calling ggrepel::geom_text_repel()
+
+- apply_visual_contrast(): corrected argument call of setEdgeLineWidthBypass() from `new.width` to `new.widths`
+
+- plot_bars(): adjusted get_mycolors() calls to get_colors()
+
+- run_corr_pipeline(): adapted function to accept changes in create_all_subsets(), added an option to use pre-defined quantile groups (e.g. High vs Low), using `discretize_proteins = FALSE`
+
+### Removed
+- get_ptn_groups(): removed completely in accordance to create_all_subsets() pipeline change
 
 
 ## [0.1.4-beta] - 2026-10-18

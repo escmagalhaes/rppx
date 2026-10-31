@@ -2,13 +2,69 @@
 % Please edit documentation in R/utils.R
 \name{clean_protein_names}
 \alias{clean_protein_names}
-\title{Function to adjust protein notation}
+\title{Clean and standardize protein names and notations}
 \usage{
 clean_protein_names(protein_names, strict = TRUE)
 }
+\arguments{
+\item{protein_names}{A character vector or named list of character vectors
+containing raw protein names as they appear in input data.}
+
+\item{strict}{Logical. If \code{TRUE} (default), stops on invalid or
+auto-corrected HGNC names. If \code{FALSE}, issues a warning instead.}
+}
+\value{
+A named list with three elements:
+\describe{
+\item{name_mapping}{A data frame with full mapping details. Key columns:
+\itemize{
+\item \code{original} — raw input name
+\item \code{base_name} — name after PTM removal
+\item \code{ptm} — extracted PTM suffix if present
+\item \code{ptm_type} — factor: \code{total}, \code{phospho}, \code{methyl},
+\code{ubiquitin}, \code{acetyl}, \code{cleaved}, or \code{other}
+\item \code{export_name} — name prepared for external tools
+(STRINGdb, EnrichR)
+\item \code{HGNC_check} — logical: \code{TRUE} = valid HGNC symbol,
+\code{FALSE} = invalid but suggestion might be available,
+\code{NA} = not found (usually histone marks)
+\item \code{suggestion} — HGNC-suggested correction when
+\code{HGNC_check == FALSE}
+\item \code{final_names} — \strong{always use this column downstream}.
+Consolidates all cases: valid names, auto-corrected names.
+\code{NA} for histone marks and unresolvable names.
+}
+}
+\item{original_names}{Character vector of unique original input names.}
+\item{clean_names}{Character vector of unique valid final names after
+HGNC correction. Ready for use with STRINGdb and EnrichR.}
+}
+}
 \description{
-Function to adjust protein notation
+Most useful for names with a post-translational modification (PTM) as suffix.
+Processes protein names by removing and storing PTM suffixes,
+expanding complex protein notations, detecting histone marks,
+and validating protein names against HGNC symbols.
+}
+\details{
+The function handles four naming cases:
+\itemize{
+\item \strong{Simple names}: validated directly against HGNC
+\item \strong{PTM suffixes}: split at the first \code{.} into base name and PTM
+\item \strong{Complex notations}: \code{BASENAME_1_2} expanded to \code{BASENAME1}, \code{BASENAME2}
+\item \strong{Histone marks}: detected by pattern \verb{H[1-4]K[0-9]+}, excluded
+from HGNC validation. \code{final_names} will be \code{NA} for these.
+}
+
+The primary use cases are: (1) stripping PTMs correctly before
+submitting to pathway analysis or STRINGdb, and (2) correcting
+non-standard protein names in raw input data.
 }
 \examples{
-## Placeholder Example ##
+clean_protein_names(c("EGFR", "AKT_1_2_3.pS473", "GSK3_A_B", "NOTCH1.cle1744"))
+clean_protein_names(c("MAPK1", "H3K27Me3"), strict = FALSE)
+
+}
+\seealso{
+\code{\link[HGNChelper:checkGeneSymbols]{HGNChelper::checkGeneSymbols()}}
 }

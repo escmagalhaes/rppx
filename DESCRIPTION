@@ -1,7 +1,7 @@
 Package: rppx
 Title: Data Analysis Toolkit for Pre-Normalized Reverse Phase Protein
     Array Data
-Version: 0.1.4
+Version: 0.2.0
 Authors@R: 
     person("Eduardo Sabino", "de Camargo Magalhães", , "escmagalhaes@gmail.com", role = c("aut", "cre"),
            comment = c(ORCID = "0000-0002-7726-4827"))
@@ -17,6 +17,7 @@ Description: Designed to work with pre-normalized data derived from
 License: MIT + file LICENSE
 URL: https://github.com/escmagalhaes/rppx
 BugReports: https://github.com/escmagalhaes/rppx/issues
+Depends: R (>= 4.1.0)
 Imports: 
     broom,
     broom.helpers,
@@ -35,6 +36,8 @@ Imports:
     ggplot2 (>= 3.5.0),
     ggplotify,
     ggpubr,
+    ggrepel, 
+    ggsci,
     glmnet,
     graphics,
     grDevices,
@@ -63,6 +66,7 @@ Imports:
     rcrossref,
     RCy3,
     rentrez,
+    rlang,
     rsample,
     rstatix,
     scales,

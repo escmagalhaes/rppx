@@ -2,13 +2,109 @@
 % Please edit documentation in R/subsetting_data.R
 \name{get_subsets}
 \alias{get_subsets}
-\title{Function to create patient subsets}
+\title{Create subsets from two group logical vector lists (masks)}
 \usage{
-get_subsets(df, group_lists, print_summary = TRUE, exclude_NA = TRUE)
+get_subsets(
+  data,
+  group_lists,
+  print_summary = FALSE,
+  exclude_NA = TRUE,
+  missing_suffix = "missing"
+)
+}
+\arguments{
+\item{data}{A data frame or tibble to subset.}
+
+\item{group_lists}{A named list of exactly 2 named lists of logical
+vectors. Each logical vector must have length \code{nrow(data)}.
+Typically produced by \code{\link[=get_var_groups]{get_var_groups()}}.}
+
+\item{print_summary}{Logical. If \code{TRUE}, prints a summary table of
+subset names and sizes ordered by number of rows.}
+
+\item{exclude_NA}{Logical. If \code{TRUE} (default), excludes group
+combinations whose name contains \code{NA} or the \code{missing_suffix}.}
+
+\item{missing_suffix}{String. Suffix for identifying missing values,
+used when \code{exclude_NA = TRUE}. Should match the \code{missing_suffix} used in
+\code{\link[=get_var_groups]{get_var_groups()}}. Default is \code{"missing"}.}
+}
+\value{
+A named list with two elements:
+\describe{
+\item{\code{subsets}}{A named list of data frames, one per non-empty
+pairwise combination. Names follow the pattern
+\code{"group1name_group2name"}.}
+\item{\code{summary}}{A data frame with columns \code{subset_name} and
+\code{n_rows}, documenting the size of each subset.}
+}
 }
 \description{
-Function to create patient subsets
+Takes exactly two named lists of logical vector lists (masks) and produces
+all non-empty pairwise combinations as subsetted data frames. Designed
+to work with the output of \code{\link[=get_var_groups]{get_var_groups()}}.
+}
+\details{
+All pairwise combinations of masks from the two group lists are
+evaluated. Empty combinations (0 rows) are silently dropped.
+
+The combination of \code{all} from both group lists is renamed to \code{"all"}
+rather than \code{"all_all"}, representing the full dataset as the baseline
+comparison group.
+
+When using \code{\link[=get_subsets]{get_subsets()}} with two group lists derived from the same
+feature (e.g. expression level and mutation status of the same protein),
+use short distinct \code{var_labs} for each call to avoid redundant subset
+names (see @examples ).
+
+\code{exclude_NA = TRUE} excludes combinations whose name contains
+\code{"missing"} or \code{"NA"},  matching the naming convention of
+\code{\link[=get_var_groups]{get_var_groups()}}. Actual \code{NA} values in the data are not tracked.
+
+Currently limited to exactly 2 group lists. For single-dimension
+subsetting or more than 2 dimensions, use \code{\link[=create_all_subsets]{create_all_subsets()}}.
 }
 \examples{
-## Placeholder Example ##
+set.seed(123)
+my_data<-data.frame(
+ FLT3=rnorm(20,mean=0.1),
+ mut_flt3=rep(c("WT","ITD","wt","TKD",NA),4)
+ )
+
+normal_data<-data.frame(FLT3=rnorm(20,mean=0))
+
+ptn_sets<-get_quantile_groups(
+ data          = my_data,
+ features      = "FLT3",
+ data_normal   = normal_data,
+ mode          = "normal_based",
+ normal_labels = paste(c("below","lower","upper","above"),"normal",sep="_")
+ )
+
+ptn_var_groups<-get_var_groups(
+  data         = ptn_sets,
+  var          = "FLT3_gp_n",
+  var_labs     = "expr"
+)
+
+mut_var_groups<-get_var_groups(
+  data         = my_data,
+  var          = "mut_flt3",
+  var_labs     = "FLT3",
+  ref_patterns = c("WT","wt"),
+  ref_suffix   = "WT",
+  alt_suffix   = "mutated"
+)
+
+result <- get_subsets(
+  data          = my_data,
+  group_lists   = list(ptn = ptn_var_groups, mut = mut_var_groups),
+  print_summary = FALSE
+)
+result$summary
+result$subsets[["expr_lower_normal_FLT3_mutated"]]
+
+}
+\seealso{
+\code{\link[=get_quantile_groups]{get_quantile_groups()}}, \code{\link[=get_var_groups]{get_var_groups()}}, \code{\link[=create_all_subsets]{create_all_subsets()}}
 }

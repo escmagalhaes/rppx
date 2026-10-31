@@ -6,12 +6,16 @@
 \usage{
 build_string_network(
   input_table,
+  stringdb_cache_path,
   mode = c("multi", "single"),
   first_neighbors = FALSE,
   hide_singletons = TRUE,
   show_first_neighbors = FALSE,
-  neighbor_min_connections = string_neighbor_min_connections,
-  neighbor_score_threshold = string_neighbor_score_threshold,
+  neighbor_min_connections = 4,
+  neighbor_score_threshold = 700,
+  stringdb_version = "11.5",
+  stringdb_score_threshold = 400,
+  stringdb_species = 9606,
   net_proteins = NULL,
   wait_for_layout_adj = TRUE
 )

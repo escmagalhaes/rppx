@@ -7,6 +7,7 @@
 get_cbio_data(
   study_id,
   main_cache_path,
+  cbio_cache_version = "v1",
   cache = TRUE,
   verbose = TRUE,
   force = FALSE

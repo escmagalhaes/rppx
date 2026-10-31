@@ -2,24 +2,158 @@
 % Please edit documentation in R/subsetting_data.R
 \name{create_all_subsets}
 \alias{create_all_subsets}
-\title{Function wrapper to generate subsets with many proteins and variable groups}
+\title{Generate all subsets across two groups of variables}
 \usage{
 create_all_subsets(
-  df_normal,
-  df_disease,
-  df_apply,
-  protein_list = NULL,
-  variable_list = NULL,
-  var_labs = NULL,
-  normal_pattern = "CD34",
-  ref_patterns = c("WT", "wt", "no"),
+  data,
+  var1,
+  var2 = NULL,
+  continuous_vars = NULL,
+  data_normal = NULL,
+  quantile_mode = c("normal_based", "quantile"),
+  n_quantiles = NULL,
+  var1_labs = NULL,
+  var2_labs = NULL,
+  ref_patterns = NULL,
+  ref_suffixes = NULL,
+  alt_suffixes = NULL,
+  missing_suffix = "missing",
+  add_binary_sets = TRUE,
+  binary_split = 2,
   exclude_NA = TRUE,
-  print_summary = TRUE
+  print_summary = FALSE
 )
 }
+\arguments{
+\item{data}{A data frame or tibble to subset.}
+
+\item{var1}{A character vector of variable names for the first
+subsetting dimension.}
+
+\item{var2}{A character vector of variable names for the second
+subsetting dimension. If \code{NULL}, single-dimension subsetting is
+applied using \code{var1} only.}
+
+\item{continuous_vars}{A character vector of variable names (from
+\code{var1} and/or \code{var2}) that require discretization via
+\code{\link[=get_quantile_groups]{get_quantile_groups()}} before masking. If \code{NULL}, all variables
+are treated as already categorical.}
+
+\item{data_normal}{A data frame of normal samples used to define
+reference-based interval boundaries. Required when \code{continuous_vars}
+is provided and \code{quantile_mode = "normal_based"}.}
+
+\item{quantile_mode}{Character. One of \code{"normal_based"} (default) or
+\code{"quantile"}. Passed to \code{\link[=get_quantile_groups]{get_quantile_groups()}}. Only relevant when
+\code{continuous_vars} is provided.}
+
+\item{n_quantiles}{A single integer. Passed to \code{\link[=get_quantile_groups]{get_quantile_groups()}}.
+Required when \code{continuous_vars} is given and \code{quantile_mode = "quantile"}.}
+
+\item{var1_labs}{A named list mapping names in \code{var1} to display
+labels used as prefix in mask names. If \code{NULL}, column names are
+used directly.}
+
+\item{var2_labs}{A named list mapping names in \code{var2} to display
+labels. If \code{NULL}, column names are used directly.}
+
+\item{ref_patterns}{A named list mapping variable names to reference
+patterns. Each element is a character vector passed to
+\code{\link[=get_var_groups]{get_var_groups()}}. Variables absent from the list default to
+\code{NULL} (no reference group). Continuous variables are always
+masked with \code{ref_patterns = NULL}.}
+
+\item{ref_suffixes}{A named list mapping variable names to reference
+group suffix strings. Defaults to \code{"neg"} for variables not in
+the list.}
+
+\item{alt_suffixes}{A named list mapping variable names to alternative
+group suffix strings. Defaults to \code{"pos"} for variables not in
+the list.}
+
+\item{missing_suffix}{A string. Suffix for missing value masks.
+Applied to all variables. Default is \code{"missing"}.}
+
+\item{add_binary_sets}{Logical. If \code{TRUE} (default), adds combined
+\verb{<label>_low} and \verb{<label>_high} masks to continuous variable group
+lists by splitting quantile levels at \code{binary_split}. These are skipped
+when there are less than 3 groups.}
+
+\item{binary_split}{A single integer. Level index at which split into \code{low}
+and \code{high} when \code{add_binary_sets = TRUE}. Default is \code{2}.}
+
+\item{exclude_NA}{Logical. Passed to \code{\link[=get_subsets]{get_subsets()}}. Default \code{TRUE}.}
+
+\item{print_summary}{Logical. Passed to \code{\link[=get_subsets]{get_subsets()}}. Default \code{FALSE}.}
+}
+\value{
+A named list where each element corresponds to a variable
+combination (named \code{"var1_var2"}) and contains:
+\describe{
+\item{\code{subsets}}{Named list of subsetted data frames.}
+\item{\code{summary}}{Data frame with columns \code{subset_name} and \code{n_rows}.}
+}
+}
 \description{
-Function wrapper to generate subsets with many proteins and variable groups
+Wrapper function that loops over all combinations of two variable groups,
+calling \code{\link[=get_quantile_groups]{get_quantile_groups()}}, \code{\link[=get_var_groups]{get_var_groups()}}, \code{\link[=get_subsets]{get_subsets()}} and
+\code{\link[=collapse_quantile_groups]{collapse_quantile_groups()}} (if called) internally. Returns a nested list
+of all non-empty subsets organized by variable combination.
+Both variable groups can contain categorical or continuous variables.
+Continuous variables are discretized first via \code{\link[=get_quantile_groups]{get_quantile_groups()}}.
+}
+\details{
+\code{var1} and \code{var2} define the two subsetting dimensions. All pairwise
+combinations across \verb{var1 × var2} are evaluated. When \code{var2 = NULL},
+single-dimension subsetting is applied to \code{var1} only.
+
+Variables listed in \code{continuous_vars} are discretized via
+\code{\link[=get_quantile_groups]{get_quantile_groups()}} before being passed to \code{\link[=get_var_groups]{get_var_groups()}}.
+If \code{add_binary_sets = TRUE} combined \code{low} and \code{high} masks are created
+with \code{\link[=collapse_quantile_groups]{collapse_quantile_groups()}}, according to the \code{binary_split} value.
+All other variables go directly to \code{\link[=get_var_groups]{get_var_groups()}}.
+
+\code{ref_patterns}, \code{ref_suffixes}, and \code{alt_suffixes} are named lists.
+Each variable can have its own settings. Variables absent from these
+lists use defaults (\code{NULL}, \code{"neg"}, \code{"pos"} respectively). Continuous
+variables always use \code{ref_patterns = NULL} regardless of what is
+specified.
+
+Note that continuous variables must be listed in \code{var1}/\code{var2} , which
+determine the pairs iterated over, and also in \code{continuous_vars}, which
+controls discretization. See @examples .
 }
 \examples{
-## Placeholder Example ##
+\dontrun{
+# Continuous x categorical
+all_subsets<-create_all_subsets(
+  data            = disease_data,
+  data_normal     = normal_data,
+  var1            = c("EGFR", "AKT1"),
+  var2            = c("mut_flt3", "mut_npm1"),
+  continuous_vars = c("EGFR", "AKT1"),
+  var1_labs       = list(EGFR = "EGFR_expr", AKT1 = "AKT1_expr"),
+  var2_labs       = list(mut_flt3 = "FLT3", mut_npm1 = "NPM1"),
+  ref_patterns    = list(mut_flt3 = c("WT","wt"),
+                         mut_npm1 = c("WT","wt")),
+  ref_suffixes    = list(mut_flt3 = "WT", mut_npm1 = "WT"),
+  alt_suffixes    = list(mut_flt3 = "mutated", mut_npm1 = "mutated")
+)
+all_subsets[["EGFR_mut_flt3"]]$summary
+
+# Two categoricals
+cat_subsets <- create_all_subsets(
+  data         = disease_data,
+  var1         = c("mut_npm1", "mut_flt3"),
+  var2         = c("tx", "cyto_risk"),
+  var1_labs    = list(mut_npm1 = "NPM1", mut_flt3 = "FLT3"),
+  var2_labs    = list(tx = "Therapy", cyto_risk = "CytoRisk"),
+  ref_patterns = list(mut_npm1 = c("WT","wt"),
+                      mut_flt3 = c("WT","wt"))
+)
+}
+
+}
+\seealso{
+\code{\link[=get_var_groups]{get_var_groups()}}, \code{\link[=get_quantile_groups]{get_quantile_groups()}} and \code{\link[=get_subsets]{get_subsets()}}
 }

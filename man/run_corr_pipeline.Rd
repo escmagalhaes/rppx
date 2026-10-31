@@ -11,7 +11,8 @@ run_corr_pipeline(
   grouping_variable = NULL,
   var_labs = NULL,
   df_normal = NULL,
-  df_subsetting = FALSE,
+  p_adjust_method = "BH",
+  single_dataset_label = "all",
   min_samples = 10,
   ncol_grid = 2,
   verbose = TRUE,
@@ -19,6 +20,18 @@ run_corr_pipeline(
   conf_level = 0.95,
   pval_cutoff = 0.05,
   abs_cutoff = 0.2,
+  df_subsetting = FALSE,
+  discretize_proteins = FALSE,
+  feat_labs = NULL,
+  quantile_mode = c("normal_based", "quantile"),
+  n_quantiles = NULL,
+  ref_patterns = NULL,
+  ref_suffixes = NULL,
+  alt_suffixes = NULL,
+  missing_suffix = "missing",
+  add_binary_sets = TRUE,
+  binary_split = 2,
+  exclude_NA = TRUE,
   run_sample_qc = TRUE,
   sample_outlier_policy = "keep_all",
   sample_rm_thr = 30,
@@ -29,9 +42,7 @@ run_corr_pipeline(
   check_mad = FALSE,
   cor_cutoff = 0.95,
   ptn_z_thrs = 3,
-  freq_thrs = 0.1,
-  p_adjust_method = "BH",
-  single_dataset_label = "all"
+  freq_thrs = 0.1
 )
 }
 \description{

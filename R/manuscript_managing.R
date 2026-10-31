@@ -164,9 +164,9 @@ extract_float_order<-function(manuscript_path,lookup_table) {
 #' @export
 #' @examples
 #' ## Placeholder Example ##
-make_float_chunks<-function(lookup_table) {
+make_float_chunks<-function(lookup_table,fig_placeholder_path) {
 
-  placeholder_fig<-file.path(biocache_root,"Quarto","placeholder.png")
+  placeholder_fig<-file.path(fig_placeholder_path,"Quarto","placeholder.png")
 
   purrr::map_chr(seq_len(nrow(lookup_table)), function( i ) {
     row        <-lookup_table[ i , ]
@@ -264,14 +264,15 @@ filter_lookup_table<-function(lookup_table,mode=c("draft","review","submission")
           selected
         }))
 
-  #Update selected_ext so it reflects the actual selected file
-  lookup_table_filt<-lookup_table_filt |> dplyr::mutate(
-    selected_ext=purrr::map_chr(file_path,~tools::file_ext(.x[[1]])))
-
   #Safety check
   if (any(lengths(lookup_table_filt$file_path) == 0)) {
     stop("Some lookup table entries have no files matching the selected extension.")
   }
+
+  #Update selected_ext so it reflects the actual selected file
+  lookup_table_filt<-lookup_table_filt |> dplyr::mutate(
+    selected_ext=purrr::map_chr(file_path,~tools::file_ext(.x[[1]])))
+
   return(lookup_table_filt)
 }
 
@@ -296,6 +297,14 @@ render_manuscript<-function(manuscript_path,manuscript_name="manuscript",
     execute_params = list(include_figures = include_figures),
     cache          = FALSE
   )
+
+  rendered<-file.path(dirname(manuscript_path), output_file)
+
+  #Safety check
+  if (!file.exists(rendered))
+    warning("Rendered file not found at: ", rendered)
+
+  invisible(rendered)
 }
 
 #' Function to prepare submission folder
@@ -313,7 +322,12 @@ prepare_submission<-function(manuscript_path,lookup_table,output_path,
     row  <-lookup_table[ i, ]
     src  <-row$file_path[[1]]
     dest <-file.path(output_path,row$label)
-    file.copy( src, dest ,overwrite=TRUE)
+    ok   <-file.copy( src, dest ,overwrite=TRUE)
+    #Safety check
+    if (!ok) {
+      stop("Could not copy '", src, "' to '", dest, "'. ",
+           "If the destination is open in another program, close it and re-run.")
+    }
     if (stringr::str_ends(src,"\\.xlsx")) {
 
       #Rewrite A1 cells in xlsx sheets
@@ -373,7 +387,7 @@ prepare_submission<-function(manuscript_path,lookup_table,output_path,
 #' @examples
 #' ## Placeholder Example ##
 manuscript_export<-function(manuscript_path,ref_bib_path,csl_cache_path,
-                            lookup_table,dataset_export_path=NULL,
+                            fig_placeholder_path,lookup_table,dataset_export_path=NULL,
                             table_export_path=NULL,figure_export_path=NULL,
                             output_path=NULL,ref_header="**REFERENCES**",
                             figure_table_header="FIGURES AND TABLES",
@@ -437,8 +451,11 @@ manuscript_export<-function(manuscript_path,ref_bib_path,csl_cache_path,
     dplyr::arrange(type_order) |> dplyr::select(-type_order)
 
   #Define float chunks and where it should begin
-  float_chunks <-make_float_chunks(lookup_table = labeled_lookup_chunks)
-  sentinel     <-"<!-- FLOAT_CHUNKS_START -->" #Prevents accumulating of floats between render modes
+  float_chunks <-make_float_chunks(
+    lookup_table = labeled_lookup_chunks,
+    fig_placeholder_path = fig_placeholder_path
+    )
+  sentinel<-"<!-- FLOAT_CHUNKS_START -->" #Prevents accumulating of floats between render modes
 
   #Create float chunk header
   float_header<-if (mode=="review") {
@@ -449,7 +466,8 @@ manuscript_export<-function(manuscript_path,ref_bib_path,csl_cache_path,
 
   #Write updated qmd file
   writeLines(
-    c(yaml_header,qmd_body,sentinel,"",float_header,"",float_chunks,"",ref_header,""),manuscript_path
+    c(yaml_header,qmd_body,sentinel,"",float_header,"",float_chunks,"",ref_header,""),
+    manuscript_path
     )
 
   #Render manuscript from .qmd file
@@ -471,12 +489,17 @@ manuscript_export<-function(manuscript_path,ref_bib_path,csl_cache_path,
     #Copy rendered manuscript to submission folder
     rendered_docx<-file.path(
       dirname(manuscript_path),
-      sprintf("%s_%s_%s.docx",format(Sys.Date(),"%Y.%m.%d"),mode,manuscript_name))
+      sprintf("%s_%s_%s.docx",format(Sys.Date(),"%Y.%m.%d"),manuscript_name,mode))
 
-    file.copy(rendered_docx,file.path(
-      output_path,
-      sprintf("%s_%s_%s.docx",format(Sys.Date(),"%Y.%m.%d"),mode,manuscript_name)),
-      overwrite=TRUE)
+    if (!file.exists(rendered_docx))
+      stop("Rendered manuscript not found at: ",rendered_docx)
+
+    ok<-file.copy(
+      rendered_docx,
+      file.path(output_path,basename(rendered_docx)),
+      overwrite = TRUE)
+
+    if (!ok) warning("Could not copy rendered manuscript to ",output_path)
   }
   invisible(manuscript_path)
 }

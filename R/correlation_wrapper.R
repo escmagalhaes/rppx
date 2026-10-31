@@ -3,16 +3,47 @@
 #' @examples
 #' ## Placeholder Example ##
 run_corr_pipeline<-function(df_input,proteins_of_interest,all_proteins,
-                            grouping_variable=NULL,var_labs=NULL,df_normal=NULL,
-                            df_subsetting=FALSE,min_samples=10,ncol_grid=2,verbose=TRUE,
-                            method='spearman',conf_level=0.95,
-                            pval_cutoff=0.05,abs_cutoff=0.20,
-                            run_sample_qc=TRUE,sample_outlier_policy="keep_all",
-                            sample_rm_thr=30,sample_diff_thr=20,
-                            run_feature_qc=TRUE,feature_outlier_policy="keep_all",
-                            check_cor=TRUE,check_mad=FALSE,cor_cutoff=0.95,
-                            ptn_z_thrs=3,freq_thrs=0.10,p_adjust_method="BH",
-                            single_dataset_label="all") {
+                            grouping_variable      = NULL,
+                            var_labs               = NULL,
+                            df_normal              = NULL,
+
+                            p_adjust_method        = "BH",
+                            single_dataset_label   = "all",
+                            min_samples            = 10,
+                            ncol_grid              = 2,
+                            verbose                = TRUE,
+                            method                 = 'spearman',
+                            conf_level             = 0.95,
+                            pval_cutoff            = 0.05,
+                            abs_cutoff             = 0.20,
+
+                            df_subsetting          = FALSE,
+                            discretize_proteins    = FALSE,
+                            feat_labs              = NULL,
+                            quantile_mode          = c("normal_based", "quantile"),
+                            n_quantiles            = NULL,
+                            ref_patterns           = NULL,
+                            ref_suffixes           = NULL,
+                            alt_suffixes           = NULL,
+                            missing_suffix         = "missing",
+                            add_binary_sets        = TRUE,
+                            binary_split           = 2,
+                            exclude_NA             = TRUE,
+
+                            run_sample_qc          = TRUE,
+                            sample_outlier_policy  = "keep_all",
+                            sample_rm_thr          = 30,
+                            sample_diff_thr        = 20,
+
+                            run_feature_qc         = TRUE,
+                            feature_outlier_policy = "keep_all",
+                            check_cor              = TRUE,
+                            check_mad              = FALSE,
+                            cor_cutoff             = 0.95,
+                            ptn_z_thrs             = 3,
+                            freq_thrs              = 0.10) {
+
+  quantile_mode<-match.arg(quantile_mode)
 
   #Helper for blank WF plot
   blank_wf_plot<-function(df_name,protein,n) {
@@ -35,56 +66,100 @@ run_corr_pipeline<-function(df_input,proteins_of_interest,all_proteins,
 
   #QC analysis
   qc_results<-run_QC_analysis(
-    df=df_input,
-    grouping_variable=grouping_variable,
-    proteins=all_proteins,
-    verbose=verbose,
-    run_sample_qc=run_sample_qc,
-    sample_outlier_policy=sample_outlier_policy,
-    sample_rm_thr=sample_rm_thr,
-    sample_diff_thr=sample_diff_thr,
-    run_feature_qc=run_feature_qc,
-    feature_outlier_policy=feature_outlier_policy,
-    check_cor=check_cor,
-    check_mad=check_mad,
-    cor_cutoff=cor_cutoff,
-    ptn_z_thrs=ptn_z_thrs,
-    freq_thrs=freq_thrs
+    df                     = df_input,
+    grouping_variable      = grouping_variable,
+    proteins               = all_proteins,
+    verbose                = verbose,
+    run_sample_qc          = run_sample_qc,
+    sample_outlier_policy  = sample_outlier_policy,
+    sample_rm_thr          = sample_rm_thr,
+    sample_diff_thr        = sample_diff_thr,
+    run_feature_qc         = run_feature_qc,
+    feature_outlier_policy = feature_outlier_policy,
+    check_cor              = check_cor,
+    check_mad              = check_mad,
+    cor_cutoff             = cor_cutoff,
+    ptn_z_thrs             = ptn_z_thrs,
+    freq_thrs              = freq_thrs
   )
-  df_qc<-qc_results$df_final
-  proteins_qc<-qc_results$proteins_final
+  df_qc            <-qc_results$df_final
+  proteins_qc      <-qc_results$proteins_final
+  ptn_name_mapping <-qc_results$ptn_name_mapping
 
   #Create subsets if requested
   df_list<-list()
   subset_summary<-data.frame()
+
   if (isTRUE(df_subsetting)) {
-    if (is.null(proteins_of_interest) && is.null(grouping_variable)) {
+
+    has_feat  <-length(proteins_of_interest) > 0
+    has_group <-!is.null(grouping_variable) && length(grouping_variable) > 0
+
+    if (!has_group && !(has_feat && discretize_proteins)) {
       stop("Subsetting requires at least one of protein(s) or grouping_variable.")
     }
+
+    as_lab_list<-function(x) if (is.null(x)) NULL else as.list(x)
+
+    #Features are continuous (discretized if discretize_proteins = TRUE) and grouping variables are categorical
+    #If discretize_proteins = FALSE, then the grouping variables become the only dimension
+    if (has_feat && discretize_proteins) {
+      var1      <-proteins_of_interest
+      var1_labs <-as_lab_list(feat_labs)
+      var2      <-if (has_group) grouping_variable else NULL
+      var2_labs <-as_lab_list(var_labs)
+      cont      <-proteins_of_interest
+    } else {
+      var1      <-grouping_variable
+      var1_labs <-as_lab_list(var_labs)
+      var2      <-NULL
+      var2_labs <-NULL
+      cont      <-NULL
+    }
+
     subset_results<-create_all_subsets(
-      df_normal=df_normal,
-      df_disease=df_input,
-      df_apply=df_qc,
-      protein_list=proteins_of_interest,
-      variable_list=grouping_variable,
-      var_labs=var_labs,
-      print_summary=verbose
+      data            = df_qc,
+      var1            = var1,
+      var2            = var2,
+      continuous_vars = cont,
+      data_normal     = df_normal,
+      quantile_mode   = quantile_mode,
+      n_quantiles     = n_quantiles,
+      var1_labs       = var1_labs,
+      var2_labs       = var2_labs,
+      ref_patterns    = ref_patterns,
+      ref_suffixes    = ref_suffixes,
+      alt_suffixes    = alt_suffixes,
+      missing_suffix  = missing_suffix,
+      add_binary_sets = add_binary_sets,
+      binary_split    = binary_split,
+      exclude_NA      = exclude_NA,
+      print_summary   = verbose
     )
+
     #Flatten nested list to df_list and create names
-    df_list<-list()
-    subset_summary<-data.frame()
-    subset_counter<-1
+    df_list        <-list()
+    subset_summary <-data.frame()
+    subset_counter <-1
+    already_seen   <-character()
     for(subset_key in names(subset_results)) {
       for(subname in names(subset_results[[subset_key]]$subsets)) {
-        dataset_id<-paste0("dataset", sprintf("%03d", subset_counter))
-        dataset_label<-subname
+
+        if (subname %in% already_seen) next #Prevent counting more than once
+        already_seen  <-c(already_seen,subname)
+
+        dataset_id    <-paste0("dataset", sprintf("%03d", subset_counter))
+        dataset_label <-subname
+
         df_list[[dataset_id]]<-subset_results[[subset_key]]$subsets[[subname]]
+
         subset_info<-subset_results[[subset_key]]$summary[
           subset_results[[subset_key]]$summary$subset_name==subname,]
-        subset_info$dataset<-dataset_id
-        subset_info$dataset_label<-dataset_label
-        subset_summary<-rbind(subset_summary,subset_info)
-        subset_counter<-subset_counter+1
+
+        subset_info$dataset       <-dataset_id
+        subset_info$dataset_label <-dataset_label
+        subset_summary            <-rbind(subset_summary,subset_info)
+        subset_counter            <-subset_counter+1
       }
     }
     if(length(df_list)==0){
@@ -99,16 +174,16 @@ run_corr_pipeline<-function(df_input,proteins_of_interest,all_proteins,
   }
 
   #Initialize results
-  results_list<-vector("list",length(df_list))
-  names(results_list)<-names(df_list)
+  results_list        <-vector("list",length(df_list))
+  names(results_list) <-names(df_list)
 
   summary_table<-data.frame(
-    dataset_name=names(df_list),
-    n_samples=NA_integer_,
-    analyzed=FALSE,
-    n_signif_correlations=NA_integer_,
-    note="",
-    row.names=NULL
+    dataset_name          = names(df_list),
+    n_samples             = NA_integer_,
+    analyzed              = FALSE,
+    n_signif_correlations = NA_integer_,
+    note                  = "",
+    row.names             = NULL
   )
 
   #Loop over datasets / subsets
@@ -122,23 +197,26 @@ run_corr_pipeline<-function(df_input,proteins_of_interest,all_proteins,
       #Skip analysis, create blank WF plots
       wf_plots<-lapply(proteins_of_interest,function(prot) blank_wf_plot(df_name,prot,n))
       names(wf_plots)<-proteins_of_interest
-      wf_grid<-ggpubr::ggarrange(plotlist=wf_plots,ncol=min(ncol_grid,length(wf_plots)),
-                                 nrow=ceiling(length(wf_plots) / ncol_grid))
+      wf_grid<-ggpubr::ggarrange(
+        plotlist = wf_plots,
+        ncol     = min(ncol_grid,length(wf_plots)),
+        nrow     = ceiling(length(wf_plots) / ncol_grid)
+        )
       wf_grid<-ggpubr::annotate_figure(
         wf_grid,top=ggpubr::text_grob(paste0(df_name," (N=",n, ")"),face="bold",size=12))
 
       results_list[[dataset_idx]]<-list(
-        df_filtered=df_sub,
-        all_proteins_filtered=all_proteins,
-        qc_results=NULL,
-        summary=list(
-          all_correlations=NULL,
-          ptn_class=NULL,
-          ptn_size=0,
-          mapping_table_full=NULL,
-          mapping_table_subset=NULL,
-          wfplots=wf_plots,
-          wf_plot_grid=wf_grid
+        df_filtered            = df_sub,
+        all_proteins_filtered  = all_proteins,
+        qc_results             = NULL,
+        summary = list(
+          all_correlations     = NULL,
+          ptn_class            = NULL,
+          ptn_size             = 0,
+          mapping_table_full   = NULL,
+          mapping_table_subset = NULL,
+          wfplots              = wf_plots,
+          wf_plot_grid         = wf_grid
         )
       )
       summary_table$analyzed[dataset_idx]<-FALSE
@@ -149,20 +227,22 @@ run_corr_pipeline<-function(df_input,proteins_of_interest,all_proteins,
 
     #Run correlation analysis
     if (verbose) cat("Running correlation analysis for dataset:",df_name,"\n")
-    cor_res<-ptn_corr(df=df_sub,
-                      all_proteins=proteins_qc,
-                      proteins_of_interest=proteins_of_interest,
-                      method=method,
-                      conf_level=conf_level,
-                      pval_cutoff=pval_cutoff,
-                      abs_cutoff=abs_cutoff,
-                      p_adjust_method=p_adjust_method)
+    cor_res<-ptn_corr(
+      df                   = df_sub,
+      all_proteins         = proteins_qc,
+      proteins_of_interest = proteins_of_interest,
+      method               = method,
+      conf_level           = conf_level,
+      pval_cutoff          = pval_cutoff,
+      abs_cutoff           = abs_cutoff,
+      p_adjust_method      = p_adjust_method)
 
     #Add Mean expression value per protein
     mean_expr<-df_sub |>
       dplyr::select(dplyr::all_of(proteins_qc)) |>
       colMeans(na.rm=TRUE) |>
       tibble::enframe(name="protein",value="mean_expr")
+
     cor_res<-cor_res |>
       dplyr::left_join(mean_expr,by="protein") |>
       dplyr::rename(mean_expr_protein=mean_expr) |>
@@ -171,22 +251,24 @@ run_corr_pipeline<-function(df_input,proteins_of_interest,all_proteins,
       dplyr::select(query_protein,protein,mean_expr_query_protein,mean_expr_protein,everything())
 
     #Export dataframe with cleaned protein names for downstream analysis
-    ptn_name_mapping<-qc_results$ptn_name_mapping
     name_map_tab_final<-cor_res |>
       dplyr::left_join(ptn_name_mapping,by=c("protein"="original"),relationship="many-to-many")|>
-      mutate(map_id=row_number()) |> select(map_id,everything()) |> arrange(final_names)
+      dplyr::mutate(map_id=row_number()) |>
+      dplyr::select(map_id,everything()) |>
+      arrange(final_names)
 
     #Significant correlations and names
-    sig<-name_map_tab_final[name_map_tab_final$is_signif
-                            & !is.na(name_map_tab_final$final_names), ]
-    original_sig_names<-unique(sig$protein)
-    original_split_names<-split(sig$protein,sig$sign)
-    original_pos_names<-unique(original_split_names$pos)
-    original_neg_names<-unique(original_split_names$neg)
-    cleaned_sig_names<-unique(sig$final_names)
-    cleaned_split_names<-split(sig$final_names,sig$sign)
-    cleaned_pos_names<-unique(cleaned_split_names$pos)
-    cleaned_neg_names<-unique(cleaned_split_names$neg)
+    sig<-name_map_tab_final[
+      name_map_tab_final$is_signif & !is.na(name_map_tab_final$final_names), ]
+
+    original_sig_names   <-unique(sig$protein)
+    original_split_names <-split(sig$protein,sig$sign)
+    original_pos_names   <-unique(original_split_names$pos)
+    original_neg_names   <-unique(original_split_names$neg)
+    cleaned_sig_names    <-unique(sig$final_names)
+    cleaned_split_names  <-split(sig$final_names,sig$sign)
+    cleaned_pos_names    <-unique(cleaned_split_names$pos)
+    cleaned_neg_names    <-unique(cleaned_split_names$neg)
 
     #Waterfall plots
     wf_plot_list<-list()
@@ -198,13 +280,15 @@ run_corr_pipeline<-function(df_input,proteins_of_interest,all_proteins,
       pos_plot<-wf_plot(cor_res_sub,type='Positive')
       wf_combo<-ggpubr::ggarrange(neg_plot, pos_plot, ncol=2, labels=NULL)
       wf_plot_list[[prot]]<-ggpubr::annotate_figure(
-        wf_combo,top=ggpubr::text_grob(paste0("Significant correlations "
-                                              ,prot," (N=",n," patients)")
-                                       ,face="bold", size=8))
+        wf_combo,top=ggpubr::text_grob(
+          paste0("Significant correlations ",prot," (N=",n," patients)"),
+          face="bold", size=8))
     }
     if(length(wf_plot_list)==0) wf_plot_list<-lapply(proteins_of_interest,function(prot) blank_wf_plot(df_name,prot,n))
-    wf_grid<-ggpubr::ggarrange(plotlist=wf_plot_list,ncol=min(ncol_grid,length(wf_plot_list)),
-                               nrow=ceiling(length(wf_plot_list)/ncol_grid))
+    wf_grid<-ggpubr::ggarrange(
+      plotlist = wf_plot_list,
+      ncol     = min(ncol_grid,length(wf_plot_list)),
+      nrow     = ceiling(length(wf_plot_list)/ncol_grid))
 
     #Compile results
     results_list[[dataset_idx]]<-list(

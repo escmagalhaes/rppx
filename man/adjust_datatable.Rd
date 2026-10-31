@@ -2,13 +2,69 @@
 % Please edit documentation in R/preprocessing_data.R
 \name{adjust_datatable}
 \alias{adjust_datatable}
-\title{Function to adjust imported Main datatable from .CSV file}
+\title{Apply data types and labels from a metadata table to a dataframe}
 \usage{
-adjust_datatable(datatable, meta_table)
+adjust_datatable(datatable, meta_table, date_format = "\%Y-\%m-\%d")
+}
+\arguments{
+\item{datatable}{A data frame or tibble to adjust. Typically imported
+from a CSV or XLSX file before any type enforcement.}
+
+\item{meta_table}{A data frame with at least four columns: \code{variable}
+(column names in \code{data}), \code{class} (target R class),
+\code{factor_levels} (pipe-separated factor levels for factor columns,
+as produced by \code{\link[=get_factor_levels]{get_factor_levels()}}), and \code{label} (display label).}
+
+\item{date_format}{A string. Determines the format of dates that will be
+parsed with as.Date() function.}
+}
+\value{
+The input \code{data} with column classes enforced and
+variable labels applied via \code{\link[labelled:var_label]{labelled::var_label()}}.
 }
 \description{
-Function to adjust imported Main datatable from .CSV file
+Enforces column classes (factor, numeric, integer, Date) and variable
+labels defined in a metadata table onto a data frame. Designed to
+standardize a freshly imported dataset using a manually curated
+metadata table as the source of truth. Designed to use after data cleanup
+with \code{\link[=get_rawtable_values]{get_rawtable_values()}}, \code{\link[=safe_clean_raw_data]{safe_clean_raw_data()}} and adding factor
+levels to metatable with \code{\link[=get_factor_levels]{get_factor_levels()}}.
+}
+\details{
+Columns in \code{data} not present in \code{meta_table} trigger a warning
+but are left unchanged. Columns in \code{meta_table} not present in
+\code{data} are silently skipped.
+
+Supported classes: \code{"factor"}, \code{"numeric"}, \code{"integer"}, \code{"Date"}.
+\code{"Date"} default behavior expects ISO 8601 format (\code{"\%Y-\%m-\%d"}) and
+other formats require explicitly passing \code{date_formats} argument.
+If multiple date columns require different formats, adjust them
+upstream so they have the same format before using this function.
+Factor levels are read from \code{meta_table$factor_levels} as a
+pipe-separated string (e.g. \code{"low|medium|high"}), as produced by
+\code{\link[=get_factor_levels]{get_factor_levels()}}.
+
+Variable labels are applied using \code{\link[labelled:var_label]{labelled::var_label()}}, making
+them accessible to downstream reporting functions such as
+\code{\link[gtsummary:tbl_summary]{gtsummary::tbl_summary()}}.
 }
 \examples{
-## Placeholder Example ##
+my_data<-data.frame(
+  status = c("alive","dead","alive"),
+  age    = c("45","67","52"),
+  stringsAsFactors = FALSE
+)
+meta<-data.frame(
+  variable      = c("status","age"),
+  label         = c("Vital status","Age (years)"),
+  class         = c("factor","numeric"),
+  factor_levels = c("alive|dead",NA),
+  stringsAsFactors = FALSE
+)
+adjust_datatable(data = my_data, meta_table = meta)
+
+}
+\seealso{
+\code{\link[=get_factor_levels]{get_factor_levels()}}, \code{\link[=get_rawtable_values]{get_rawtable_values()}},
+\code{\link[=safe_clean_raw_data]{safe_clean_raw_data()}} and \code{\link[labelled:var_label]{labelled::var_label()}}
 }

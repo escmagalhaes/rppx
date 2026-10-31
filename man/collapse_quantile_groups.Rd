@@ -2,13 +2,65 @@
 % Please edit documentation in R/quantile_spliting_data.R
 \name{collapse_quantile_groups}
 \alias{collapse_quantile_groups}
-\title{Function to collapse quantile groups into other groups (e.g. 'high' vs 'low')}
+\title{Collapse quantile groups into fewer named groups}
 \usage{
 collapse_quantile_groups(data, feature, groups, new_col = NULL, verbose = TRUE)
 }
+\arguments{
+\item{data}{A data frame or tibble containing the factor column to recode.}
+
+\item{feature}{A string. Name of the factor column to collapse. Must be a
+factor produced by \code{\link[=get_quantile_groups]{get_quantile_groups()}}.}
+
+\item{groups}{A named list mapping new group labels to quantile level
+indices. Indices are ordered from lowest to highest expression
+(e.g. \code{list(low = c(1, 2), high = c(3, 4))}). All indices must be
+valid and non-duplicated. Unassigned indices become \code{NA} with a warning.}
+
+\item{new_col}{A string. Name of the new variable to add to \code{data}.
+If \code{NULL} (default), the new variable name is auto-generated as
+\code{feature_gp_nK},where \code{K} is the number of groups that will be made
+according to \code{groups} (e.g. \code{"EGFR_gp4_gp_n2"} for a 2-group collapse).}
+
+\item{verbose}{Logical. If \code{TRUE} (default), prints a summary of how
+levels were recoded.}
+}
+\value{
+The input \code{data} with a new factor column \code{new_col} appended,
+with levels in the order defined by \code{groups}.
+}
 \description{
-Function to collapse quantile groups into other groups (e.g. 'high' vs 'low')
+Recodes a quantile-grouped factor column into a smaller set of named
+groups by mapping quantile level indices to new labels. Typically used
+after \code{\link[=get_quantile_groups]{get_quantile_groups()}}, for instance, to collapse 4 quantiles into
+"low" vs "high" grouping.
+}
+\details{
+Quantile level indices follow the ordering produced by \code{\link[base:cut]{base::cut()}}:
+index \code{1} is always the lowest expression group and index \code{n} is the
+highest. So \code{list(low = c(1, 2), high = c(3, 4))} maps the two lowest
+quantiles to \code{"low"} and the two highest to \code{"high"}.
 }
 \examples{
-## Placeholder Example ##
+set.seed(42)
+my_data<-data.frame(
+  id   = paste0("S",1:20),
+  EGFR = rnorm(20,mean=2)
+)
+my_data <- get_quantile_groups(
+  data        = my_data,
+  features    = "EGFR",
+  n_quantiles = 5,
+  mode        = "quantile"
+)
+collapse_quantile_groups(
+  data    = my_data,
+  feature = "EGFR_gp5",
+  groups  = list(low=c(1,2,3),high=c(4,5)),
+  new_col = "EGFR_high_vs_low"
+)
+
+}
+\seealso{
+\code{\link[=get_quantile_groups]{get_quantile_groups()}}, \code{\link[=determine_optimal_quantile]{determine_optimal_quantile()}}
 }

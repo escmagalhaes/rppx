@@ -2,13 +2,54 @@
 % Please edit documentation in R/preprocessing_data.R
 \name{membership_to_list}
 \alias{membership_to_list}
-\title{Function used to transform data input into a list}
+\title{Convert a binary membership data frame to a named list}
 \usage{
 membership_to_list(data, membership_col, yes_value = "yes")
 }
+\arguments{
+\item{data}{A data frame or tibble with groups as rows and features
+as columns. Must contain the column given by \code{membership_col}.
+All values should be standardized membership strings (e.g. \code{"yes"}
+or \code{"no"}) after cleaning with \code{\link[=safe_clean_raw_data]{safe_clean_raw_data()}}.}
+
+\item{membership_col}{A string giving the name of the column from \code{data}
+containing the membership group identifiers. This column is used
+to name the elements of the output list.}
+
+\item{yes_value}{A string. The value indicating membership.
+Default is \code{"yes"}.}
+}
+\value{
+A named list where each item corresponds to a group (named by
+\code{membership_col}) and contains a sorted character vector of
+features that belong to that membership.
+}
 \description{
-Function used to transform data input into a list
+Transforms any binary membership data frame into a named list, in which
+each element is a character vector of members belonging to a specific group.
+Works for any rows × features membership structure: pathway annotations,
+gene sets, protein complexes, or any other custom functional grouping.
+Designed to work with data after data cleanup via \code{\link[=clean_protein_names]{clean_protein_names()}},
+\code{\link[=get_rawtable_values]{get_rawtable_values()}} and \code{\link[=safe_clean_raw_data]{safe_clean_raw_data()}}.
+}
+\details{
+The expected input is a binary membership reference data frame, where rows
+represent groups and columns represent features. One of \code{data} columns
+(\code{membership_col}) is used as list element names in the output.
+Values not equal to \code{yes_value} are treated as non-membership.
 }
 \examples{
-## Placeholder Example ##
+membership_data<-data.frame(
+  EGFR = c("yes","yes","no"),
+  AKT1 = c("yes","no","no"),
+  TP53 = c("no", "no","yes"),
+  pathways = c("PI3K","MAPK","Apoptosis"),
+  stringsAsFactors = FALSE
+)
+membership_to_list(data = membership_data, membership_col = "pathways")
+
+}
+\seealso{
+\code{\link[=get_rawtable_values]{get_rawtable_values()}}, \code{\link[=safe_clean_raw_data]{safe_clean_raw_data()}}
+and \code{\link[=clean_protein_names]{clean_protein_names()}}
 }

@@ -5,11 +5,15 @@
 \title{Function to compare networks against reference}
 \usage{
 compare_ref_network(
-  ptn_net_list,
+  ptn_net_map,
   ref_ptn,
+  stringdb_cache_path,
   first_neighbors = FALSE,
-  neighbor_min_connections = 1,
-  string_neighbor_score_threshold = 700
+  neighbor_min_connections = 4,
+  neighbor_score_threshold = 700,
+  stringdb_version = "11.5",
+  stringdb_score_threshold = 400,
+  stringdb_species = 9606
 )
 }
 \description{
@@ -17,4 +21,5 @@ Function to compare networks against reference
 }
 \examples{
 ## Placeholder Example ##
+##REMEMBER TO OPEN CYTOSCAPE SOFTWARE##
 }

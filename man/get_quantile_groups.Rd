@@ -2,7 +2,8 @@
 % Please edit documentation in R/quantile_spliting_data.R
 \name{get_quantile_groups}
 \alias{get_quantile_groups}
-\title{Function to get several quantile groups for many proteins}
+\title{Transform continuous features into categorical groups via quantile-based or
+reference-based splitting}
 \usage{
 get_quantile_groups(
   data,
@@ -13,9 +14,87 @@ get_quantile_groups(
   normal_labels = c("Below Normal", "Lower Normal", "Upper Normal", "Above Normal")
 )
 }
+\arguments{
+\item{data}{A data frame or tibble containing the features to split.}
+
+\item{features}{A character vector of column names to split into groups.
+All must be present in \code{data}.}
+
+\item{n_quantiles}{An integer vector of quantile counts (e.g. \code{c(2, 3, 4)}).
+Each value \code{q} produces a column \code{featurename_gpq} with \code{q} groups.
+Required when \code{mode} is \code{"quantile"} or \code{"both"}.}
+
+\item{data_normal}{A data frame of normal samples used to define interval
+boundaries for \code{mode = "normal_based"} or \code{"both"}. Must contain the
+same feature columns as \code{data}. Required when \code{mode} is \code{"normal_based"}
+or \code{"both"}.}
+
+\item{mode}{Character. One of \code{"quantile"} (default), \code{"normal_based"},
+or \code{"both"}. Controls which grouping strategy is applied:
+\describe{
+\item{\code{"quantile"}}{Splits each feature into \code{n_quantiles} equal-frequency
+groups based on the distribution in \code{data}.}
+\item{\code{"normal_based"}}{Splits into 4 groups using the min, median, and
+max of the normal sample distribution as boundaries.}
+\item{\code{"both"}}{Applies both strategies, producing multiple new columns
+per feature.}
+}}
+
+\item{normal_labels}{A character vector of exactly 4 labels for the
+normal-based groups, ordered from lowest to highest. Default is
+\code{c("Below Normal", "Lower Normal", "Upper Normal", "Above Normal")}.
+Only used when \code{mode} is \code{"normal_based"} or \code{"both"}.}
+}
+\value{
+The input \code{data} with new grouping columns appended:
+\describe{
+\item{\code{featurename_gpQ}}{One column per value of \code{n_quantiles}, where
+\code{Q} is the number of quantile groups, present when \code{mode} is \code{"both"} or
+\code{"quantile"}. Returns a factor with levels ordered from lowest to highest
+values and interval labels.}
+\item{\code{featurename_gp_n}}{Normal-based grouping column, present when
+\code{mode} is \code{"normal_based"} or \code{"both"}. Returns a factor with
+with \code{normal_labels} as levels, ordered from lowest to highest.}
+}
+}
 \description{
-Function to get several quantile groups for many proteins
+For each feature, creates one or more grouping columns in the input dataframe
+by cutting values into quantile-based intervals or reference-based cutpoints,
+which uses the values from normal samples (controls) to create the intervals.
+This is the primary tool for continuous-to-categorical transformation in the
+rppx subsetting workflow. Designed for protein expression data but works on
+any numeric feature.
+}
+\details{
+For quantile-based splitting, boundaries are computed from \code{data} itself
+using equal-frequency breaks. The lower and upper bounds are set to
+\code{-Inf} and \code{Inf} respectively to capture all values including extremes.
+
+For normal-based splitting, boundaries are derived from the min, median,
+and max of \code{data_normal}, producing 4 biologically meaningful intervals
+relative to the normal sample range. A warning is issued if the normal
+range boundaries are not monotonically increasing for a given feature,
+which may indicate that disease expression does not exceed normal levels.
+
+Existing grouping columns matching the pattern \code{featurename_gpX} will be
+overwritten with a warning.
 }
 \examples{
-## Placeholder Example ##
+set.seed(42)
+my_data<-data.frame(
+  id   = paste0("S",1:20),
+  EGFR = rnorm(20,mean=2),
+  AKT1 = rnorm(20,mean=1)
+)
+#Quantile split into 2 and 3 groups
+get_quantile_groups(
+  data       = my_data,
+  features   = c("EGFR","AKT1"),
+  n_quantiles = c(2,3),
+  mode       = "quantile"
+)
+
+}
+\seealso{
+\code{\link[=collapse_quantile_groups]{collapse_quantile_groups()}}, \code{\link[=determine_optimal_quantile]{determine_optimal_quantile()}}
 }

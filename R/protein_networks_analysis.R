@@ -4,23 +4,24 @@
 #' @export
 #' @examples
 #' ## Placeholder Example ##
-get_stringdb_data<-function(input_table,first_neighbors=FALSE
-                            ,neighbor_min_connections=string_neighbor_min_connections
-                            ,neighbor_score_threshold=string_neighbor_score_threshold
-                            ,stringdb_version=string_version
-                            ,stringdb_score_threshold=string_score_threshold
-                            ,stringdb_cache_path=string_cache_path
-                            ,stringdb_species=string_species) {
+get_stringdb_data<-function(input_table,stringdb_cache_path,
+                            first_neighbors          = FALSE,
+                            neighbor_min_connections = 4,
+                            neighbor_score_threshold = 700,
+                            stringdb_version         = "11.5",
+                            stringdb_score_threshold = 400,
+                            stringdb_species         = 9606) {
+
+  #Create directory to cache stringDB data
+  if (!dir.exists(stringdb_cache_path)) {
+    dir.create( stringdb_cache_path, recursive = TRUE, showWarnings = FALSE)
+  }
 
   #In case of running the same network multiple times
-  cache_file<-file.path(stringdb_cache_path
-                        ,paste0("string_network_",stringdb_species,"_"
-                                ,stringdb_score_threshold,"_"
-                                ,ifelse(first_neighbors
-                                        ,paste0("neighbors_",neighbor_min_connections
-                                                ,"_",neighbor_score_threshold, "_"),"")
-                                ,digest::digest(sort(unique(input_table$final_names)))
-                                ,".rds"))
+  cache_file<-file.path(stringdb_cache_path,paste0(
+    "string_network_v",stringdb_version,"_",stringdb_species,"_",stringdb_score_threshold,"_",
+    if(first_neighbors) paste0("neighbors_",neighbor_min_connections,"_",neighbor_score_threshold,"_"),
+    digest::digest(input_table),".rds"))
 
   if(file.exists(cache_file)){
     message("Loading cached STRING network...")
@@ -29,10 +30,10 @@ get_stringdb_data<-function(input_table,first_neighbors=FALSE
 
   #Initialize STRINGdb
   message("Initializing STRINGdb...")
-  string_db<-STRINGdb$new(version=string_version,
-                          species=string_species,
-                          score_threshold=string_score_threshold,
-                          input_directory=string_cache_path)
+  string_db<-STRINGdb$new(version=stringdb_version,
+                          species=stringdb_species,
+                          score_threshold=stringdb_score_threshold,
+                          input_directory=stringdb_cache_path)
 
   #Extract unique protein names from input
   proteins<-data.frame(final_names=unique(na.omit(input_table$final_names)))
@@ -103,7 +104,7 @@ get_stringdb_data<-function(input_table,first_neighbors=FALSE
     dplyr::rename(STRING_source=from
            ,STRING_target=to
            ,score=combined_score) |>
-    dplyr::filter(score >= string_score_threshold)
+    dplyr::filter(score >= stringdb_score_threshold)
 
   #Helper Function to to duplicated PTM edges and adjust if necessary
   correct_ptm_edges<-function(nodes,edges_original) {
@@ -174,10 +175,8 @@ get_stringdb_data<-function(input_table,first_neighbors=FALSE
 #' @export
 #' @examples
 #' ## Placeholder Example ##
-create_base_network<-function(nodes,edges
-                              ,title="Protein Network"
-                              ,collection="Proteomics"
-                              ,hide_singletons=TRUE) {
+create_base_network<-function(nodes,edges,title="Protein Network",
+                              collection="Proteomics",hide_singletons=TRUE) {
 
   message("Connecting to Cytoscape...")
 
@@ -188,36 +187,33 @@ create_base_network<-function(nodes,edges
   #Delete previous networks
   deleteAllNetworks()
 
-  #Set seed for reproducibility
-  set.seed(123)
-
   #(optional) Hide singletons from network
   if(!"name" %in% colnames(nodes)) nodes$name<-nodes$id #safety check, cytoscape require 'name' column
   if(hide_singletons){
-    connected_nodes<-unique(c(edges$source,edges$target))
-    nodes<-nodes[nodes$id %in% connected_nodes,]
-  }
-  if(hide_singletons){
-    message(length(setdiff(nodes$id,unique(c(edges$source,edges$target)))),
-            " singleton nodes removed before network creation.")
+    connected <-unique(c(edges$source,edges$target))
+    n_removed <-sum(!nodes$id %in% connected)
+    nodes     <-nodes[nodes$id %in% connected, ]
+    message(n_removed," singleton nodes removed before network creation.")
   }
 
   message("Creating network...")
 
   #Create network in cytoscape
-  createNetworkFromDataFrames(nodes=nodes,edges=edges
-                              ,title=title,
-                              collection=collection
-                              ,layout.name="none")
+  createNetworkFromDataFrames(
+    nodes        = nodes,
+    edges        = edges,
+    title        = title,
+    collection   = collection,
+    layout.name = "none"
+    )
 
   #Wait for Cytoscape to finish
-  while(TRUE){
-    res<-tryCatch({
-      nets<-getNetworkList()
-      title %in% nets
-    },error=function(e) FALSE)
-
-    if(res) break
+  t0<-Sys.time()
+  repeat {
+    nets<-tryCatch(getNetworkList(),error=function(e) character(0))
+    if (title %in% nets) break
+    if (as.numeric(difftime(Sys.time(),t0, units = "secs")) > 600)
+      stop("Timed out waiting for network '",title,"' in Cytoscape.")
     Sys.sleep(1)
   }
 
@@ -234,7 +230,8 @@ create_base_network<-function(nodes,edges
 #' @export
 #' @examples
 #' ## Placeholder Example ##
-highlight_hubs<-function(style_name="dataStyle",min_size=300,max_size=500,top_percent=0.1){
+highlight_hubs<-function(style_name="dataStyle",min_size=300,
+                         max_size=500,top_percent=0.1){
 
   message("Calculating node connectivity (degree)...")
 
@@ -262,13 +259,16 @@ highlight_hubs<-function(style_name="dataStyle",min_size=300,max_size=500,top_pe
   hubs<-degree_df$id[degree_df$degree>=cutoff]
 
   message(length(hubs)," hub proteins detected: ",paste(hubs,collapse=', '))
+
+  return(invisible(hubs))
 }
 
 #' Function to map STRING confidence to edge width
 #' @export
 #' @examples
 #' ## Placeholder Example ##
-apply_edge_confidence<-function(style_name="dataStyle",min_width=2,max_width=6){
+apply_edge_confidence<-function(style_name="dataStyle",
+                                min_width=2,max_width=6){
 
   message("Applying STRING confidence edge widths...")
 
@@ -288,7 +288,8 @@ apply_edge_confidence<-function(style_name="dataStyle",min_width=2,max_width=6){
 #' @export
 #' @examples
 #' ## Placeholder Example ##
-apply_base_visual_style<-function(style_name="dataStyle",first_neighbors=FALSE) {
+apply_base_visual_style<-function(style_name="dataStyle",
+                                  first_neighbors=FALSE) {
 
   message("Creating base visual style...")
 
@@ -394,26 +395,31 @@ highlight_edge_sets<-function(net_proteins){
 #' @export
 #' @examples
 #' ## Placeholder Example ##
-apply_visual_contrast<-function(contrast,style_name="dataStyle"
-                                ,border_colors=c("deepskyblue2","firebrick1")
-                                ,min_border_width=50,max_border_width=100
-                                ,default_edge_color='gray70'
-                                ,color_edges=FALSE,edge_sets=NULL
-                                ,edge_palette=NULL,edge_width_highlight=20
-                                ,expr_col=NULL,width_col=NULL,class_col=NULL){
+apply_visual_contrast<-function(contrast,style_name  = "dataStyle",
+                                border_colors        = c("deepskyblue2","firebrick1"),
+                                min_border_width     = 50,
+                                max_border_width     = 100,
+                                default_edge_color   = 'gray70',
+                                color_edges          = FALSE,
+                                edge_sets            = NULL,
+                                edge_palette         = NULL,
+                                edge_width_highlight = 20,
+                                expr_col             = NULL,
+                                width_col            = NULL,
+                                class_col            = NULL){
 
   message("Applying contrast: ",contrast)
 
   #Define columns depending on contrast
-  expr_col<-if (!is.null(expr_col)) expr_col else paste0("mean_expr_",contrast)
-  width_col<-if (!is.null(width_col)) width_col else paste0("abs_diff_",contrast)
-  class_col<-if (!is.null(class_col)) class_col else paste0("class_",contrast)
+  expr_col  <-if (!is.null(expr_col)) expr_col else paste0("mean_expr_",contrast)
+  width_col <-if (!is.null(width_col)) width_col else paste0("abs_diff_",contrast)
+  class_col <-if (!is.null(class_col)) class_col else paste0("class_",contrast)
 
   nodes<-getTableColumns(table="node")
 
   #Define node colors (expression values)
-  expr_values<-nodes[[expr_col]]
-  expr_values<-expr_values[is.finite(expr_values)]
+  expr_values <-nodes[[expr_col]]
+  expr_values <-expr_values[is.finite(expr_values)]
 
   #Safety check
   if (length(expr_values)==0) {
@@ -433,16 +439,16 @@ apply_visual_contrast<-function(contrast,style_name="dataStyle"
     }
     return(node_breaks)
   }
-  node_breaks<-scale_color_breaks(expr_values)
-  node_colors<-jet.colors(length(node_breaks))
+  node_breaks <-scale_color_breaks(expr_values)
+  node_colors <-jet.colors(length(node_breaks))
 
   #Attach color node mapping
   setNodeColorMapping(
     expr_col,
     node_breaks,
     node_colors,
-    style.name=style_name,
-    mapping.type="c"
+    style.name   = style_name,
+    mapping.type = "c"
     )
   }
 
@@ -460,8 +466,8 @@ apply_visual_contrast<-function(contrast,style_name="dataStyle"
       width_col,
       c(min(width_values),max(width_values)),
       c(min_border_width,max_border_width),
-      style.name=style_name,
-      mapping.type="c"
+      style.name   = style_name,
+      mapping.type = "c"
       )
   }
 
@@ -485,18 +491,18 @@ apply_visual_contrast<-function(contrast,style_name="dataStyle"
   setNodeBorderColorMapping(
     class_col,
     class_levels,
-    border_colors,
-    style.name=style_name,
-    mapping.type="d"
+    border_colors_use,
+    style.name   = style_name,
+    mapping.type = "d"
     )
   }
 
   #Optional edge coloring
   if(color_edges && !is.null(edge_sets)){
-    n_nets<-length(edge_sets$edges_within)
-    net_names<-names(edge_sets$edges_within)
+    n_nets    <-length(edge_sets$edges_within)
+    net_names <-names(edge_sets$edges_within)
 
-    # Use user-provided palette or generate default
+    #Use user-provided palette or generate default
     if(is.null(edge_palette)){
       if(n_nets <= 12){
         edge_palette<-RColorBrewer::brewer.pal(max(n_nets,3),"Set3")
@@ -505,28 +511,43 @@ apply_visual_contrast<-function(contrast,style_name="dataStyle"
       }
     }
 
-    # Ensure enough colors for within-network + 1 intersection color
+    #Ensure enough colors for within-network + 1 intersection color
     if(length(edge_palette) < n_nets + 1){
       edge_palette<-rep(edge_palette,length.out=n_nets + 1)
     }
 
-    # Within-network edges: first N colors
+    #Within-network edges: first N colors
     for(i in seq_along(net_names)){
       edges<-edge_sets$edges_within[[net_names[ i ]]]
-      setEdgeColorBypass(edge.names=edges,new.colors=edge_palette[ i ])
-      setEdgeLineWidthBypass(edge.names=edges,new.width=edge_width_highlight)
+      if (length(edges) == 0) next
+      setEdgeColorBypass(
+        edge.names = edges,
+        new.colors = edge_palette[ i ]
+        )
+      setEdgeLineWidthBypass(
+        edge.names = edges,
+        new.widths = edge_width_highlight
+        )
     }
 
-    # Intersection edges: next color in the palette
+    #Intersection edges: next color in the palette
     if(length(edge_sets$edges_inter) > 0){
       intersection_color<-edge_palette[n_nets + 1]
-      setEdgeColorBypass(edge.names=edge_sets$edges_inter,new.colors=intersection_color)
-      setEdgeLineWidthBypass(edge.names=edge_sets$edges_inter,new.width=edge_width_highlight)
+      setEdgeColorBypass(
+        edge.names = edge_sets$edges_inter,
+        new.colors = intersection_color
+        )
+      setEdgeLineWidthBypass(
+        edge.names = edge_sets$edges_inter,
+        new.widths = edge_width_highlight
+        )
     }
 
     #Default edges
-    setEdgeColorBypass(edge.names=edge_sets$edges_default,new.colors=default_edge_color)
-    setEdgeLineWidthBypass(edge.names=edge_sets$edges_default,new.width=edge_width_highlight)
+    if (length(edge_sets$edges_default) > 0) {
+      setEdgeColorBypass(edge.names = edge_sets$edges_default,
+                         new.colors = default_edge_color)
+    }
 
     message("Edges highlighted successfully for ",n_nets," networks.")
   }
@@ -537,14 +558,13 @@ apply_visual_contrast<-function(contrast,style_name="dataStyle"
 #' @export
 #' @examples
 #' ## Placeholder Example ##
-get_single_ptn_network<-function(protein_name,
-                                 first_neighbors=TRUE,
-                                 neighbor_min_connections=1,
-                                 neighbor_score_threshold=string_neighbor_score_threshold,
-                                 stringdb_version=string_version,
-                                 stringdb_score_threshold=string_score_threshold,
-                                 stringdb_cache_path=string_cache_path,
-                                 stringdb_species=string_species) {
+get_single_ptn_network<-function(protein_name,stringdb_cache_path,
+                                 first_neighbors          = TRUE,
+                                 neighbor_min_connections = 4,
+                                 neighbor_score_threshold = 700,
+                                 stringdb_version         = "11.5",
+                                 stringdb_score_threshold = 400,
+                                 stringdb_species         = 9606) {
 
   #Clean protein name
   clean<-clean_protein_names(protein_name,strict=FALSE)
@@ -553,14 +573,16 @@ get_single_ptn_network<-function(protein_name,
   input_table<-data.frame(final_names=clean$clean_names,original=protein_name
                           ,base_name=protein_name,ptm=NA_character_,stringsAsFactors=FALSE)
 
-  get_stringdb_data(input_table,
-                    first_neighbors=first_neighbors,
-                    neighbor_min_connections=neighbor_min_connections,
-                    neighbor_score_threshold=neighbor_score_threshold,
-                    stringdb_version=stringdb_version,
-                    stringdb_score_threshold=stringdb_score_threshold,
-                    stringdb_cache_path=stringdb_cache_path,
-                    stringdb_species=stringdb_species)
+  get_stringdb_data(
+    input_table,
+    first_neighbors          = first_neighbors,
+    neighbor_min_connections = neighbor_min_connections,
+    neighbor_score_threshold = neighbor_score_threshold,
+    stringdb_version         = stringdb_version,
+    stringdb_score_threshold = stringdb_score_threshold,
+    stringdb_cache_path      = stringdb_cache_path,
+    stringdb_species         = stringdb_species
+    )
 
 }
 
@@ -568,56 +590,79 @@ get_single_ptn_network<-function(protein_name,
 #' @export
 #' @examples
 #' ## Placeholder Example ##
-compare_ref_network<-function(ptn_net_list,ref_ptn,first_neighbors=FALSE
-                              ,neighbor_min_connections=1
-                              ,string_neighbor_score_threshold=700){
+#' ##REMEMBER TO OPEN CYTOSCAPE SOFTWARE##
+compare_ref_network<-function(ptn_net_map,ref_ptn,stringdb_cache_path,
+                              first_neighbors                 = FALSE,
+                              neighbor_min_connections        = 4,
+                              neighbor_score_threshold        = 700,
+                              stringdb_version                = "11.5",
+                              stringdb_score_threshold        = 400,
+                              stringdb_species                = 9606){
 
-  ##REMEMBER TO OPEN CYTOSCAPE SOFTWARE##
   dataset_networks<-list()
   for (nm in names(ptn_net_map)) {
     message("\nBuilding network: ",nm,"...\n")
-    ptn_net<-build_string_network(ptn_net_map[[ nm ]],mode="multi",
-                                  first_neighbors=first_neighbors,
-                                  neighbor_min_connections=neighbor_min_connections,
-                                  neighbor_score_threshold=string_neighbor_score_threshold)
+    ptn_net<-build_string_network(
+      ptn_net_map[[ nm ]],
+      mode                     = "multi",
+      first_neighbors          = first_neighbors,
+      neighbor_min_connections = neighbor_min_connections,
+      neighbor_score_threshold = neighbor_score_threshold,
+      stringdb_version         = stringdb_version,
+      stringdb_score_threshold = stringdb_score_threshold,
+      stringdb_cache_path      = stringdb_cache_path,
+      stringdb_species         = stringdb_species
+      )
 
     #Store string data
     dataset_networks[[ nm ]]<-ptn_net
   }
 
   #Helper function to compute jaccard
-  jaccard<-function(a, b) {
-    a<-unique(na.omit(a))
-    b<-unique(na.omit(b))
-    length(intersect(a, b)) / length(union(a, b))
+  jaccard<-function( a , b ) {
+    a <-unique(na.omit( a ))
+    b <-unique(na.omit( b ))
+    length(intersect( a , b )) / length(union( a , b ))
   }
 
   #Single protein network with first neighbors to get reference network
-  single_ptn_data<-get_single_ptn_network(protein_name=ref_ptn
-                                          ,first_neighbors=TRUE     #always TRUE for this one
-                                          ,neighbor_min_connections=neighbor_min_connections
-                                          ,neighbor_score_threshold=string_neighbor_score_threshold)
+  single_ptn_data<-get_single_ptn_network(
+    protein_name             = ref_ptn,
+    first_neighbors          = TRUE,     #always TRUE for this one
+    neighbor_min_connections = neighbor_min_connections,
+    neighbor_score_threshold = neighbor_score_threshold,
+    stringdb_version         = stringdb_version,
+    stringdb_score_threshold = stringdb_score_threshold,
+    stringdb_cache_path      = stringdb_cache_path,
+    stringdb_species         = stringdb_species
+    )
 
   #Jaccard per dataset network
   jaccard_results<-lapply(names(dataset_networks), function( nm ) {
-    dataset_proteins<-unique(dataset_networks[[ nm ]]$nodes$label)
-    reference_proteins<-unique(single_ptn_data$nodes$label)
-    data.frame(dataset=nm
-               ,jaccard=jaccard(dataset_proteins,reference_proteins)
-               ,n_overlap=length(intersect(dataset_proteins,reference_proteins))
-               ,n_dataset=length(dataset_proteins)
-               ,n_reference=length(reference_proteins))
+    dataset_proteins   <-unique(dataset_networks[[ nm ]]$nodes$label)
+    reference_proteins <-unique(single_ptn_data$nodes$label)
+    data.frame(
+      dataset     = nm ,
+      jaccard     = jaccard(dataset_proteins,reference_proteins),
+      n_overlap   = length(intersect(dataset_proteins,reference_proteins)),
+      n_dataset   = length(dataset_proteins),
+      n_reference = length(reference_proteins)
+      )
   }) |> dplyr::bind_rows()
 
   #Get overlapping proteins
   overlap_ptn<-lapply(names(dataset_networks), function( nm ) {
-    dataset_proteins<-unique(dataset_networks[[ nm ]]$nodes$label)
-    reference_proteins<-unique(single_ptn_data$nodes$label)
+    dataset_proteins   <-unique(dataset_networks[[ nm ]]$nodes$label)
+    reference_proteins <-unique(single_ptn_data$nodes$label)
     intersect(dataset_proteins,reference_proteins)
   })
   names(overlap_ptn)<-names(ptn_net_map)
 
-  return(list(jaccard=jaccard_results,overlaps=overlap_ptn))
+  return(list(
+    jaccard  = jaccard_results,
+    overlaps = overlap_ptn
+  )
+  )
 }
 
 

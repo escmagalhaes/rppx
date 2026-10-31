@@ -8,6 +8,7 @@ manuscript_export(
   manuscript_path,
   ref_bib_path,
   csl_cache_path,
+  fig_placeholder_path,
   lookup_table,
   dataset_export_path = NULL,
   table_export_path = NULL,

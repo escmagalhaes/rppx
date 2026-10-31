@@ -75,21 +75,21 @@ plot_density<-function(df,protein,grouping_var=NULL,line_var_label="Type",
 
     #Get fill colors
     if (color_fill_mode=="list") {
-      if (is.null(fill_colors)) fill_colors<-get_mycolors(mode="list")
+      if (is.null(fill_colors)) fill_colors<-get_colors(mode="list")
       if (n_levels > length(fill_colors)) {
         warning(paste0("Not enough colors in for ",n_levels,
                        " levels. Interpolating palette."))
         fill_colors<-colorRampPalette(fill_colors)(n_levels)
       }
-      fill_vals<-get_mycolors(n_colors=n_levels,mode="list",color_list=fill_colors)
+      fill_vals<-get_colors(n_colors=n_levels,mode="list",color_list=fill_colors)
     } else {
-      if (is.null(fill_colors)) fill_colors<-get_mycolors(mode="vector")
+      if (is.null(fill_colors)) fill_colors<-get_colors(mode="vector")
       if (n_levels > length(fill_colors)) {
         warning(paste0("Not enough colors in for ",n_levels,
                        " levels. Interpolating palette."))
         fill_colors<-colorRampPalette(fill_colors)(n_levels)
       }
-      fill_vals<-get_mycolors(n_colors=n_levels,mode="vector",color_vector=fill_colors)
+      fill_vals<-get_colors(n_colors=n_levels,mode="vector",color_vector=fill_colors)
     }
     fill_vals_named<-setNames(fill_vals,label_levels)
 
@@ -170,21 +170,21 @@ plot_density<-function(df,protein,grouping_var=NULL,line_var_label="Type",
 
     #Get fill colors
     if (color_fill_mode=="list") {
-      if (is.null(fill_colors)) fill_colors<-get_mycolors(mode="list")
+      if (is.null(fill_colors)) fill_colors<-get_colors(mode="list")
       if (n_covar_levels > length(fill_colors)) {
         warning(paste0("Not enough colors in for ",n_covar_levels,
                        " levels. Interpolating palette."))
         fill_colors<-colorRampPalette(fill_colors)(n_covar_levels)
       }
-      fill_vals<-get_mycolors(n_colors=n_covar_levels,mode="list",color_list=fill_colors)
+      fill_vals<-get_colors(n_colors=n_covar_levels,mode="list",color_list=fill_colors)
     } else {
-      if (is.null(fill_colors)) fill_colors<-get_mycolors(mode="vector")
+      if (is.null(fill_colors)) fill_colors<-get_colors(mode="vector")
       if (n_covar_levels > length(fill_colors)) {
         warning(paste0("Not enough colors in for ",n_covar_levels,
                        " levels. Interpolating palette."))
         fill_colors<-colorRampPalette(fill_colors)(n_covar_levels)
       }
-      fill_vals<-get_mycolors(n_colors=n_covar_levels,mode="vector",color_vector=fill_colors)
+      fill_vals<-get_colors(n_colors=n_covar_levels,mode="vector",color_vector=fill_colors)
     }
     fill_vals_named<-setNames(fill_vals,covar_levels)
 
@@ -679,8 +679,8 @@ plot_heatmap<-function(df,proteins,
                        grouping_var_label=NULL,row_anno=FALSE,row_anno_df=NULL,
                        row_anno_protein_col=NULL,rown_anno_vars=NULL,rown_anno_vars_labels=NULL,
                        colors_ht=NULL,covar_colors_override=NULL,col_id=NULL,angle_col=45,
-                       colors_anno_col=c(pal_jco()(2)[2:1],'red2',brewer.pal(7,"Dark2")[c(7,1,2:6)]),
-                       colors_anno_row=c(pal_jco()(2)[2:1],'red2',brewer.pal(7,"Dark2")[c(7,1,2:6)]),
+                       colors_anno_col=c(ggsci::pal_jco()(2)[2:1],'red2',brewer.pal(7,"Dark2")[c(7,1,2:6)]),
+                       colors_anno_row=c(ggsci::pal_jco()(2)[2:1],'red2',brewer.pal(7,"Dark2")[c(7,1,2:6)]),
                        colors_grouping_var=NULL,colors_NA=pal_jco()(3)[3],
                        plot_title=NULL,cluster_rows=TRUE,cluster_cols=FALSE,
                        legend_breaks=NULL,legend_labels=NULL,breaks=NULL,
@@ -735,7 +735,7 @@ plot_heatmap<-function(df,proteins,
 
   #Resolve grouping_var_colors
   if (is.null(colors_grouping_var)) {
-    colors_grouping_var<-get_mycolors(mode="vector")
+    colors_grouping_var<-get_colors(mode="vector")
   }
 
   #Factor and order grouping_var
@@ -1101,7 +1101,7 @@ create_bxplot<-function(df, continuous_var, discrete_var, fill_var = NULL,
   # Global test only when no fill_var
   if(is.null(fill_var) && !is.null(global_method)){
     bxplot <- bxplot +
-      stat_compare_means(method = global_method,
+      ggpubr::stat_compare_means(method = global_method,
                          label.x = n_groups/2,
                          label.y = global_label_y,
                          size = 3)
@@ -1256,7 +1256,7 @@ plot_bars<-function(df,x_var,y_var,fill_var,x_angle=45,legend_name=NULL,
   bar_type<-match.arg(bar_type)
 
   if (is.null(barcolors)){
-    barcolors<-get_mycolors(n_colors=nlevels(df[[fill_var]]),mode="vector")
+    barcolors<-get_colors(n_colors=nlevels(df[[fill_var]]),mode="vector")
   }
 
   if (bar_type=="dodge"){

@@ -4,7 +4,7 @@
 \alias{make_float_chunks}
 \title{Function to generate float chunks to embed within text}
 \usage{
-make_float_chunks(lookup_table)
+make_float_chunks(lookup_table, fig_placeholder_path)
 }
 \description{
 Function to generate float chunks to embed within text

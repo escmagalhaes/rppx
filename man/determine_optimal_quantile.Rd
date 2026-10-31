@@ -2,7 +2,7 @@
 % Please edit documentation in R/quantile_spliting_data.R
 \name{determine_optimal_quantile}
 \alias{determine_optimal_quantile}
-\title{Function to automate best quantile split determination}
+\title{Determine the optimal quantile split for survival analysis}
 \usage{
 determine_optimal_quantile(
   data,
@@ -10,12 +10,83 @@ determine_optimal_quantile(
   time_var,
   event_var,
   q_range = 2:6,
-  padj_method = "BH"
+  padj_method = "BH",
+  verbose = TRUE
 )
 }
+\arguments{
+\item{data}{A data frame or tibble containing the feature, time, and
+event variables.}
+
+\item{feature}{A string. Name of the numeric feature column to split.}
+
+\item{time_var}{A string. Name of the survival time column.}
+
+\item{event_var}{A string. Name of the event indicator column
+(1 = event occurred, 0 = censored).}
+
+\item{q_range}{An integer vector of quantile counts to test. Default
+is \code{2:6}, meaning splits from 2 to 6 quantiles are evaluated. A maximum of
+6 quantiles is used as default reduce the probability of
+generating very small comparison groups (e.g. < 15\%).}
+
+\item{padj_method}{A string. Name of p-value correction method. Default method
+is \code{BH}. Possible methods are: \code{holm},\code{hochberg},\code{hommel},\code{bonferroni},
+\code{BH},\code{BY},\code{fdr},\code{none}.}
+
+\item{verbose}{Logical. If \code{TRUE} (default), prints the best quantile split.}
+}
+\value{
+The input \code{data} with two new columns appended:
+the intermediate quantile grouping (\code{feature_gpN}) and the
+optimal binary split (\code{feature_group}) with values \code{"Low"}
+and \code{"High"}, and an attribute named \code{optimal_split_results},
+which consists in a data frame of all tested splits ordered by
+\code{q_value}, with columns: \code{n_quantiles}, \code{split_point},\code{low_group},
+\code{high_group}, \code{n_low_group}, \code{n_high_group}, \code{p_value},\code{q_value}.
+}
 \description{
-Function to automate best quantile split determination
+Systematically tests all possible quantile splits of a single feature
+across a range of quantile counts, evaluating each split using a
+log-rank test, with p-values are adjusted for multiple comparisons.
+Returns the data with the best split applied and a full results table
+ordered by q-value, then p-value, then n_quantiles.
+}
+\details{
+For each quantile count \code{q} in \code{q_range}, the feature is split into
+\code{q} equal-frequency groups. All \code{q - 1} possible binary collapses are
+then tested (e.g. for \code{q = 4}: 1vs3, 2vs2, 3vs1) using a log-rank test
+via \code{\link[survival:survdiff]{survival::survdiff()}}. The split with the lowest \code{q_value} is
+selected and applied to the data. Ties are resolved by lower \code{p-value} and
+then lower \code{n_quantile}. The \code{q_value} column represents the adjusted
+\code{p-value} calculated using \code{\link[stats:p.adjust]{stats::p.adjust()}} using the desired method.
+
+Sometimes tied values or limited feature variability causes quantile
+groups to be empty. Therefore, quantile splits that fail to produce
+\code{"Low"} and \code{"High"} groups with at least one case are skipped.
+
+The output column \code{feature_group} always has two values: \code{"Low"} and
+\code{"High"}, where \code{"Low"} contains the bottom quantiles and \code{"High"}
+the top quantiles as determined by the best split.
+
+\strong{Note:} This function performs multiple testing across all splits and
+quantile counts. The resulting q-values and p-values should be interpreted
+with caution and ideally validated in an independent cohort.
 }
 \examples{
-## Placeholder Example ##
+\dontrun{
+#Requires survival data with time and event columns
+result<-determine_optimal_quantile(
+ data      = my_data,
+ feature   = "EGFR",
+ time_var  = "surv_time",
+ event_var = "event"
+)
+attr(result,"optimal_split_results")  #full table of tested splits
+head(result)                          #data with optimal split applied
+}
+
+}
+\seealso{
+\code{\link[=get_quantile_groups]{get_quantile_groups()}}, \code{\link[=collapse_quantile_groups]{collapse_quantile_groups()}}
 }

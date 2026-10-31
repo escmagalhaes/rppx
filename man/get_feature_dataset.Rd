@@ -2,13 +2,58 @@
 % Please edit documentation in R/preprocessing_data.R
 \name{get_feature_dataset}
 \alias{get_feature_dataset}
-\title{Function to get protein dataset}
+\title{Extract a feature matrix from a dataset}
 \usage{
 get_feature_dataset(data, n_features, id_column, start_column)
 }
+\arguments{
+\item{data}{A data frame or tibble with both sample ID and feature columns.}
+
+\item{n_features}{A single integer. Expected number of feature columns.}
+
+\item{id_column}{A string. Name of the column containing sample
+identifiers (e.g. patient IDs). Retained in the output.}
+
+\item{start_column}{A string. Name of the first feature column.
+All columns from this position to the last column are extracted.}
+}
+\value{
+A data frame containing the \code{id_column} and all feature
+columns from \code{start_column} to the last column.
+}
 \description{
-Function to get protein dataset
+Gets an ID column and a contiguous block of feature columns from a data frame,
+given that the expected number of features matches the input data.
+Originally designed for protein data, but works in any dataset where
+features occupy a contiguous right-hand block of columns.
+}
+\details{
+The function assumes features occupy a contiguous block of columns
+starting at \code{start_column} and ending at the last column of data.
+Columns that identify samples must appear before \code{start_column}.
+Useful to create a feature-only dataset to compare against reference
+features and filter out features using \code{\link[=remove_extra_terms]{remove_extra_terms()}}
+
+The \code{n_features} check is intentional: it acts as a safeguard
+against silent dataset changes (e.g. columns added or removed
+upstream). If the count does not match, the function stops with
+an informative error.
 }
 \examples{
-## Placeholder Example ##
+my_data <- data.frame(
+  patient_id = c("P1","P2","P3"),
+  age        = c(45,67,52),
+  ABL1       = c(1.2,0.8,1.5),
+  AKT1       = c(0.9,1.1,0.7)
+)
+get_feature_dataset(
+  data         = my_data,
+  n_features   = 2,
+  id_column    = "patient_id",
+  start_column = "ABL1"
+)
+
+}
+\seealso{
+\code{\link[=remove_extra_terms]{remove_extra_terms()}}
 }

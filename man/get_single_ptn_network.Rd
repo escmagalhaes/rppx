@@ -6,13 +6,13 @@
 \usage{
 get_single_ptn_network(
   protein_name,
+  stringdb_cache_path,
   first_neighbors = TRUE,
-  neighbor_min_connections = 1,
-  neighbor_score_threshold = string_neighbor_score_threshold,
-  stringdb_version = string_version,
-  stringdb_score_threshold = string_score_threshold,
-  stringdb_cache_path = string_cache_path,
-  stringdb_species = string_species
+  neighbor_min_connections = 4,
+  neighbor_score_threshold = 700,
+  stringdb_version = "11.5",
+  stringdb_score_threshold = 400,
+  stringdb_species = 9606
 )
 }
 \description{

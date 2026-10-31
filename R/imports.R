@@ -5,7 +5,7 @@
 #' @importFrom dplyr n_distinct pull slice_head ungroup rename_with across
 #' @importFrom dplyr c_across distinct rowwise if_all cur_group group_modify
 #' @importFrom dplyr n inner_join transmute coalesce na_if row_number desc
-#' @importFrom dplyr count
+#' @importFrom dplyr count full_join
 #'
 #' @importFrom stats AIC IQR anova as.formula chisq.test coef complete.cases
 #' @importFrom stats confint cor density dist fisher.test kruskal.test lm
@@ -53,7 +53,12 @@
 #' @import gtsummary
 #' @import rstatix
 #' @import gt
+#' @import broom.helpers
 #'
+#' @importFrom ggsci pal_jco
+#' @importFrom ggpubr stat_compare_means stat_pvalue_manual
+#' @importFrom ggrepel geom_text_repel
+#' @importFrom rlang := .data
 #' @importFrom plyr .
 #' @importFrom parallel clusterExport detectCores makeCluster stopCluster
 #' @importFrom tools file_ext

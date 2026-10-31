@@ -2,13 +2,43 @@
 % Please edit documentation in R/preprocessing_data.R
 \name{get_rawtable_values}
 \alias{get_rawtable_values}
-\title{Function to get raw values from raw datatable}
+\title{Get unique values from variables in a dataset}
 \usage{
 get_rawtable_values(data, features)
 }
+\arguments{
+\item{data}{A data frame or tibble containing the variables to inspect.}
+
+\item{features}{A character vector of column names to extract values from.}
+}
+\value{
+A data frame with three columns:
+\describe{
+\item{variable}{Column name from the input data.}
+\item{raw_value}{Unique values found in that column, lowercased,
+trimmed of whitespace, sorted, and with \code{NA} removed.}
+\item{clean_value}{Empty column (\code{NA}) for manual completion:
+fill this in to map raw values to standardized labels.}
+}
+}
 \description{
-Function to get raw values from raw datatable
+Extracts unique values from one or more columns in a data frame,
+returning a structured table for manual inspection and cleaning.
+Useful for auditing raw categorical variables before recoding.
+}
+\details{
+The \code{clean_value} column is intentionally empty. The intended workflow
+is to export the result, fill in \code{clean_value} manually, and use the
+completed table as a recoding reference for downstream cleaning.
 }
 \examples{
-## Placeholder Example ##
+dataframe<-data.frame(
+  status = c("Alive","alive","Dead ","dead",NA),
+  grade  = c("low","Low","HIGH","high","medium")
+)
+get_rawtable_values(data=dataframe,features=c("status","grade"))
+
+}
+\seealso{
+\code{\link[=safe_clean_raw_data]{safe_clean_raw_data()}}
 }

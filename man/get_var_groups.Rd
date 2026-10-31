@@ -2,22 +2,110 @@
 % Please edit documentation in R/subsetting_data.R
 \name{get_var_groups}
 \alias{get_var_groups}
-\title{Function to make variable groups}
+\title{Generate logical group masks from a categorical variable}
 \usage{
 get_var_groups(
-  df,
+  data,
   var,
   var_labs = NULL,
-  ref_patterns = c("WT", "wt", "no"),
-  ref_suffix = "neg",
-  alt_suffix = "pos",
+  ref_patterns = NULL,
+  ref_suffix = NULL,
+  alt_suffix = NULL,
   missing_suffix = "missing",
   verbose = TRUE
 )
 }
+\arguments{
+\item{data}{A data frame or tibble containing the variable to group by.}
+
+\item{var}{A string. Name of the categorical column to group by.Can be a
+character, factor, or quantile factor column from \code{\link[=get_quantile_groups]{get_quantile_groups()}}.}
+
+\item{var_labs}{A string. Display label for the variable, used as prefix
+in group names (e.g. \code{"MUT_status"} to \code{"MUT_status_pos"}). If \code{NULL}
+(default), \code{var} is used as the prefix.}
+
+\item{ref_patterns}{A character vector of patterns matched against values
+in \code{var} to identify the reference/negative group. Matching is
+case-insensitive and whole-word. If \code{NULL} (default), no reference
+group is identified and only \code{all}, \code{missing}, and individual level
+masks are returned. Use \code{NULL} for variables with no natural reference
+(e.g. therapy arms, quantile groups).}
+
+\item{ref_suffix}{A string. Suffix for the reference group name.
+Only used when \code{ref_patterns} is not \code{NULL}. Default is \code{NULL}.}
+
+\item{alt_suffix}{A string. Suffix for the combined alternative group
+name. Only used when \code{ref_patterns} is not \code{NULL}. Default is \code{NULL}.}
+
+\item{missing_suffix}{A string. Suffix for the missing values group
+name. Default is \code{"missing"}.}
+
+\item{verbose}{Logical. If \code{TRUE} (default), prints a message when no
+alternative levels are detected.}
+}
+\value{
+A named list of logical vectors, each of length \code{nrow(data)}:
+\describe{
+\item{\code{all}}{All rows (\code{TRUE} for every row).}
+\item{\code{prefix_missing_suffix}}{Rows with \code{NA} in \code{var}.}
+\item{\code{prefix_ref_suffix}}{Reference group. Only present when\code{ref_patterns}
+is not \code{NULL}.}
+\item{\code{prefix_alt_suffix}}{All non-reference, non-missing rows combined.
+Only present when \code{ref_patterns} is not \code{NULL}.}
+\item{\code{prefix_value}}{One mask entry per unique non-reference value,
+with spaces replaced by \verb{_} and special characters removed.}
+}
+}
 \description{
-Function to make variable groups
+Creates a named list of logical vectors (masks) that identify which rows
+belong to each group defined by a categorical variable. Works on any column
+whose values represent category labels, including character columns, factor
+columns, and discretized numeric columns produced by \code{\link[=get_quantile_groups]{get_quantile_groups()}}.
+Raw numeric columns are not supported. Masks can be used directly to subset
+data frames via \code{\link[=get_subsets]{get_subsets()}}.
+}
+\details{
+When \code{ref_patterns = NULL}, the function skips reference group detection
+entirely and returns \code{all}, \code{missing}, and one mask per unique value.
+This is the correct behavior for variables with no natural reference
+group, such as therapy arms, quantile interval factors, or any
+nominal variable where all levels are equally valid comparators.
+
+When \code{ref_patterns} is provided, whole-word regex matching is used to detect
+the values of \code{ref_patterns}. Values not matching any reference pattern and
+not missing are treated as alternative levels. Each unique alternative value
+gets its own mask in addition to the combined \code{alt_suffix} mask.
+
+Group names use \code{var_labs} as prefix, making them traceable back to
+the source variable. This naming convention is relied upon by
+\code{\link[=get_subsets]{get_subsets()}} and the wrapper \code{\link[=create_all_subsets]{create_all_subsets()}}.
 }
 \examples{
-## Placeholder Example ##
+my_data<-data.frame(
+  mut_flt3=c("WT","ITD","wt","TKD",NA,"WT"),
+  tx  = c("AraC","HMA","venetoclax","AraC","HMA",NA),
+  stringsAsFactors=FALSE
+)
+
+#With reference group (Binary variable e.g. mutation status)
+get_var_groups(
+  data         = my_data,
+  var          = "mut_flt3",
+  var_labs     = "FLT3",
+  ref_patterns = c("WT","wt"),
+  ref_suffix   = "WT",
+  alt_suffix   = "mutated"
+)
+
+#Without reference group (Categorical variable e.g. therapy)
+get_var_groups(
+  data     = my_data,
+  var      = "tx",
+  var_labs = "Therapy"
+)
+
+}
+\seealso{
+\code{\link[=get_quantile_groups]{get_quantile_groups()}}, \code{\link[=get_subsets]{get_subsets()}}, \code{\link[=create_all_subsets]{create_all_subsets()}}
 }

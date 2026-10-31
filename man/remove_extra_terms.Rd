@@ -2,13 +2,51 @@
 % Please edit documentation in R/preprocessing_data.R
 \name{remove_extra_terms}
 \alias{remove_extra_terms}
-\title{Function to remove extra proteins that are not in working dataset}
+\title{Remove features not present in a reference feature set}
 \usage{
 remove_extra_terms(data, features, reference_features, verbose = TRUE)
 }
+\arguments{
+\item{data}{A data frame or tibble to filter.}
+
+\item{features}{A character vector of feature names corresponding to
+the columns of \code{data}. Must be present in \code{data}.}
+
+\item{reference_features}{A character vector of feature names to keep.
+Features who are not in \code{reference_features} are removed.}
+
+\item{verbose}{Logical. If \code{TRUE} (default), prints how many features
+were removed and which ones.}
+}
+\value{
+The input \code{data} with columns corresponding to extra features
+removed. Returns \code{data} unchanged if no extra features are found.
+}
 \description{
-Function to remove extra proteins that are not in working dataset
+Filters columns from a data frame by removing entries whose corresponding
+feature names are not found in a reference feature set. Reports which
+features were removed. Useful for aligning datasets that may have
+received datasets with updated features upstream. Designed to use after
+extracting a feature-only dataset with \code{\link[=get_feature_dataset]{get_feature_dataset()}}.
+}
+\details{
+Extra features are defined as those in \code{features} but not in
+\code{reference_features} (i.e. \code{setdiff(features, reference_features)}).
+
+The function is particularly useful when upstream data providers
+send updated datasets with more features than the working dataset,
+and you need to freeze the feature set to match a reference.
 }
 \examples{
-## Placeholder Example ##
+my_data<-data.frame("EGFR"=c(1.2, 0.8),"AKT1"=c(1.5,0.9),"TP53"=c(0.3,1.4))
+
+remove_extra_terms(
+  data               = my_data,
+  features           = colnames(my_data),
+  reference_features = c("EGFR","AKT1")
+)
+
+}
+\seealso{
+\code{\link[=get_feature_dataset]{get_feature_dataset()}}
 }

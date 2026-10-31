@@ -32,8 +32,8 @@ plot_km(
   linetype_overall = "solid",
   color_overall = "black",
   line_types = c("solid", "twodash", "dashed", "dotted", "dotdash", "longdash"),
-  colors = c("red2", "blue3", "green4", "purple2", "darkorange", "darkcyan",
-    "darkgoldenrod3", "yellow2", "deeppink2", "lightsalmon2", "darkturquoise")
+  colors = c("red2", "blue3", "green4", "purple2", "darkorange", "darkturquoise",
+    "darkgoldenrod3", "yellow2", "deeppink2", "lightsalmon2", "darkcyan")
 )
 }
 \description{

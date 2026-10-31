@@ -377,7 +377,7 @@ plot_corr_scatter<-function(comb_corr,datasetA,datasetB,datasetA_name,datasetB_n
   #Plot
   scplot<-ggplot(df,aes(x=.data[[corA]],y=.data[[corB]],color=Significant))+
     geom_point(alpha=0.6)+scale_color_manual(values=color_vals)+
-    #geom_text_repel(data=top,aes(label=protein),size=2,color='black',max.overlaps=30)+
+    #ggrepel::geom_text_repel(data=top,aes(label=protein),size=2,color='black',max.overlaps=30)+
     #geom_vline(xintercept=0,linetype="dashed")+geom_hline(yintercept=0,linetype="dashed")+
     geom_smooth(method="lm",se=FALSE,color="darkgreen",linetype="solid",linewidth=0.5)+
     geom_abline(slope=1,intercept=0,linetype="dashed",color="orange3",linewidth=0.5)+
@@ -478,7 +478,7 @@ plot_delta_scatter<-function(comb_corr,datasetA,datasetB
   ddscplot<-ggplot(df,aes(x=delta_A,y=delta_B,color=Significant))+
     geom_point(alpha=0.6)+scale_color_manual(values=color_vals)+
     geom_abline(slope=1,intercept=0,linetype="dashed",color="orange3",size=0.5)+
-    #geom_text_repel(data=top,aes(label=protein),size=2,max.overlaps=30,color='black')+
+    #ggrepel::geom_text_repel(data=top,aes(label=protein),size=2,max.overlaps=30,color='black')+
     geom_vline(xintercept=0,linetype="dashed")+geom_hline(yintercept=0,linetype="dashed")+
     geom_smooth(method="lm",se=FALSE,color="darkgreen",linetype="solid",size=0.5)+theme_classic()+
     theme(plot.title=element_text(size=10)
@@ -664,7 +664,7 @@ plot_delta_volcano<-function(comb_corr,datasetA,datasetB
   ggplot(df,aes(delta_corr, -log10(p_change)))+
     geom_point(alpha=0.6,color="grey50")+
     geom_point(data=top,color="red",size=2)+
-    geom_text_repel(data=top,aes(label=protein),size=3)+
+    ggrepel::geom_text_repel(data=top,aes(label=protein),size=3)+
     geom_vline(xintercept=0,linetype="dashed",color="red")+theme_classic()+
     labs(title=paste("Delta volcano:",datasetA_name,"vs",datasetB_name)
          ,x="Delta correlation",y="-log10(p)")

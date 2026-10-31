@@ -2,7 +2,7 @@
 % Please edit documentation in R/preprocessing_data.R
 \name{safe_clean_raw_data}
 \alias{safe_clean_raw_data}
-\title{Function to safe clean raw data}
+\title{Clean and recode raw variables using a corrections table}
 \usage{
 safe_clean_raw_data(
   data,
@@ -12,9 +12,78 @@ safe_clean_raw_data(
     "not applicable", "unknown", "", "--", "---")
 )
 }
+\arguments{
+\item{data}{A data frame or tibble containing the variables to clean.}
+
+\item{corrections_table}{A data frame with three columns: \code{variable}
+(column name in \code{data}), \code{raw_value} (original value to replace),
+and \code{clean_value} (replacement value). Typically the
+output of \code{\link[=get_rawtable_values]{get_rawtable_values()}} after manual completion.}
+
+\item{numeric_vars}{A character vector of column names to treat as
+numeric. These are not recoded but have common NA strings coerced
+to \code{NA}. Default is \code{NULL}.}
+
+\item{na_strings}{A character vector of strings to treat as \code{NA}.
+Matching is case-insensitive after whitespace trimming. Defaults
+to a set of common NA representations.}
+}
+\value{
+The input \code{data} with cleaned variables, plus an attribute
+\code{safe_clean_report} which is a data frame that documents all changes:
+\describe{
+\item{variable}{Column name that was processed.}
+\item{row}{Row index of the changed value.}
+\item{raw_value}{Original value before cleaning.}
+\item{cleaned_value}{Value after cleaning, or \code{NA} if coerced.}
+\item{status}{One of \code{"cleaned"} (recoded), \code{"unmatched"} (value
+not in corrections table), or \code{"coerced_na"} (NA string in a
+numeric variable).}
+}
+}
 \description{
-Function to safe clean raw data
+Applies standardized value recoding to categorical variables using a
+corrections table, and coerces common NA strings to \code{NA} in numeric
+variables. Returns the cleaned data frame with a full change report
+attached as an attribute.
+}
+\details{
+This function is designed to work in a two-step workflow with
+\code{\link[=get_rawtable_values]{get_rawtable_values()}}:
+\enumerate{
+\item Run \code{\link[=get_rawtable_values]{get_rawtable_values()}} to extract unique raw values
+\item Fill in \code{clean_value} manually in the resulting table
+\item Pass the completed table here as \code{corrections_table}
+}
+
+Unmatched values (present in \code{data} but not in \code{corrections_table})
+are left in lower case and with trimmed whitespace, and flagged in
+the report with status \code{"unmatched"}. Values matching \code{na_strings} in
+numeric variables are coerced to \code{NA} and flagged as \code{"coerced_na"}.
+Retrieve the full report with \code{attr(result,"safe_clean_report")}.
+
+Variables appearing in both \code{corrections_table} and \code{numeric_vars}
+trigger a warning stating that they will be processed as categorical
+variables.
 }
 \examples{
-## Placeholder Example ##
+my_data<-data.frame(
+  status = c("Alive", "alive", "Dead ", "dead", NA),
+  age    = c("45", "n/a", "67", "unknown", "52")
+)
+corrections<-data.frame(
+  variable    = c("status", "status"),
+  raw_value   = c("alive", "dead"),
+  clean_value = c("Alive", "Dead")
+)
+result<-safe_clean_raw_data(
+  data              = my_data,
+  corrections_table = corrections,
+  numeric_vars      = "age"
+)
+attr(result,"safe_clean_report")
+
+}
+\seealso{
+\code{\link[=get_rawtable_values]{get_rawtable_values()}}
 }
